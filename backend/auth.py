@@ -65,12 +65,7 @@ class LoginRequest(BaseModel):
 def build_router(db) -> APIRouter:
     router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-    async def get_current_user(request: Request) -> dict:
-        token = request.cookies.get("access_token")
-        if not token:
-            auth = request.headers.get("Authorization", "")
-            if auth.startswith("Bearer "):
-                token = auth[7:]
+    async def user_from_token(token: str | None) -> dict:
         if not token:
             raise HTTPException(status_code=401, detail="Not authenticated")
         try:
@@ -91,6 +86,14 @@ def build_router(db) -> APIRouter:
         user.pop("_id", None)
         user.pop("password_hash", None)
         return user
+
+    async def get_current_user(request: Request) -> dict:
+        token = request.cookies.get("access_token")
+        if not token:
+            auth = request.headers.get("Authorization", "")
+            if auth.startswith("Bearer "):
+                token = auth[7:]
+        return await user_from_token(token)
 
     @router.post("/login")
     async def login(body: LoginRequest, response: Response):
@@ -137,6 +140,7 @@ def build_router(db) -> APIRouter:
         return {"ok": True}
 
     router.dependencies_get_current_user = get_current_user  # type: ignore[attr-defined]
+    router.user_from_token = user_from_token  # type: ignore[attr-defined]
     return router
 
 

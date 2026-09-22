@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatApiError } from "@/lib/api";
 import { Terminal, ShieldCheck } from "lucide-react";
+import { useBranding } from "@/lib/useBranding";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const appName = useBranding();
   const [email, setEmail] = useState("admin@sentinel.app");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -46,7 +48,7 @@ export default function LoginPage() {
               <Terminal className="w-5 h-5 text-[#00FF66]" strokeWidth={1.5} />
             </div>
             <span className="font-mono-s text-xs tracking-[0.3em] uppercase text-white/60">
-              Sentinel / v1
+              {appName} / v1
             </span>
           </div>
 

@@ -1,13 +1,15 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useBranding } from "@/lib/useBranding";
 import {
   Activity,
   Server,
   Globe,
   KeyRound,
   StickyNote,
-  Bell,
+  Settings,
   Terminal,
+  SquareTerminal,
   LogOut,
 } from "lucide-react";
 
@@ -17,12 +19,14 @@ const NAV = [
   { to: "/domains", label: "Domains & SSL", icon: Globe, testid: "nav-domains" },
   { to: "/vault", label: "Vault",   icon: KeyRound, testid: "nav-vault" },
   { to: "/notes", label: "Notes",   icon: StickyNote, testid: "nav-notes" },
-  { to: "/settings", label: "Alerts", icon: Bell,    testid: "nav-settings" },
+  { to: "/terminal", label: "Terminal", icon: SquareTerminal, testid: "nav-terminal" },
+  { to: "/settings", label: "Settings", icon: Settings, testid: "nav-settings" },
 ];
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const appName = useBranding();
 
   const onLogout = async () => {
     await logout();
@@ -37,7 +41,7 @@ export default function Sidebar() {
             <Terminal className="w-4 h-4 text-[#00FF66]" strokeWidth={1.5} />
           </div>
           <div>
-            <div className="font-display font-bold text-sm leading-none">SENTINEL</div>
+            <div className="font-display font-bold text-sm leading-none uppercase truncate max-w-[150px]" data-testid="sidebar-app-name">{appName}</div>
             <div className="font-mono-s text-[9px] tracking-[0.25em] text-white/40 mt-1">
               MONITOR / v1
             </div>

@@ -9,6 +9,7 @@ import DomainsPage from "@/pages/DomainsPage";
 import VaultPage from "@/pages/VaultPage";
 import NotesPage from "@/pages/NotesPage";
 import SettingsPage from "@/pages/SettingsPage";
+import TerminalPage from "@/pages/TerminalPage";
 import PublicStatusPage from "@/pages/PublicStatusPage";
 
 function Protected({ children }) {
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="/vault" element={<VaultPage />} />
             <Route path="/notes" element={<NotesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/terminal" element={<TerminalPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

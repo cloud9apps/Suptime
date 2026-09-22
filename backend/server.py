@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
@@ -41,6 +41,7 @@ from monitor import (
     fetch_ssh_metrics,
     run_check,
 )
+from web_ssh import parse_vault_host, run_ssh_session
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -63,6 +64,7 @@ app.add_middleware(
 auth_router = build_auth_router(db)
 app.include_router(auth_router)
 get_current_user = auth_router.dependencies_get_current_user  # type: ignore[attr-defined]
+user_from_token = auth_router.user_from_token  # type: ignore[attr-defined]
 
 
 def now_iso() -> str:
@@ -152,6 +154,7 @@ class SmtpConfig(BaseModel):
 
 
 class NotificationSettingsIn(BaseModel):
+    app_name: str = "Sentinel"
     email_enabled: bool = False
     email_recipient: Optional[str] = None
     webhooks: list[WebhookEntry] = []
@@ -193,6 +196,7 @@ async def _get_notification_settings() -> dict:
         webhooks = ([{"id": new_id(), "name": "default", "url": legacy_url,
                       "enabled": bool(legacy_on)}] if legacy_url else [])
     return {
+        "app_name": doc.get("app_name") or "Sentinel",
         "email_enabled": doc.get("email_enabled", False),
         "email_recipient": doc.get("email_recipient"),
         "webhooks": webhooks,
@@ -963,6 +967,88 @@ async def dashboard(user: dict = Depends(get_current_user)):
 @app.get("/api/health")
 async def health():
     return {"ok": True, "at": now_iso()}
+
+
+@app.get("/api/branding")
+async def branding():
+    settings = await _get_notification_settings()
+    return {"app_name": settings["app_name"]}
+
+
+# =========================================================================
+# Web SSH terminal
+# =========================================================================
+
+@app.get("/api/terminal/targets")
+async def terminal_targets(user: dict = Depends(get_current_user)):
+    servers = await db.servers.find(
+        {"ssh_enabled": True, "ssh_host": {"$nin": [None, ""]}},
+        {"_id": 0, "id": 1, "name": 1, "ssh_host": 1, "ssh_port": 1, "ssh_username": 1,
+         "ssh_private_key": 1, "last_status": 1},
+    ).to_list(500)
+    creds = await db.credentials.find(
+        {"category": "ssh_key"}, {"_id": 0, "id": 1, "name": 1, "url": 1, "username": 1,
+                                  "ssh_key": 1},
+    ).to_list(500)
+    out = [{"source": "server", "id": s["id"], "name": s["name"], "host": s["ssh_host"],
+            "port": s.get("ssh_port", 22), "username": s.get("ssh_username"),
+            "auth": "key" if s.get("ssh_private_key") else "password",
+            "last_status": s.get("last_status")} for s in servers]
+    for c in creds:
+        host, port, uname = parse_vault_host(c.get("url"), c.get("username"))
+        out.append({"source": "vault", "id": c["id"], "name": c["name"], "host": host or None,
+                    "port": port, "username": uname,
+                    "auth": "key" if c.get("ssh_key") else "password"})
+    return out
+
+
+@app.websocket("/api/ws/ssh")
+async def ws_ssh(ws: WebSocket):
+    token = ws.query_params.get("token") or ws.cookies.get("access_token")
+    try:
+        await user_from_token(token)
+    except HTTPException:
+        await ws.close(code=4401)
+        return
+    await ws.accept()
+    try:
+        first = await asyncio.wait_for(ws.receive_json(), timeout=20)
+    except (asyncio.TimeoutError, WebSocketDisconnect, ValueError):
+        await ws.close(code=4400)
+        return
+    source = first.get("source", "adhoc")
+    cfg: dict = {}
+    if source == "server":
+        s = await db.servers.find_one({"id": first.get("id")})
+        if not s or not s.get("ssh_host"):
+            await ws.send_json({"type": "error", "message": "Server has no SSH config"})
+            await ws.close(); return
+        cfg = {"host": s["ssh_host"], "port": s.get("ssh_port", 22),
+               "username": s.get("ssh_username"), "password": s.get("ssh_password"),
+               "private_key": s.get("ssh_private_key")}
+    elif source == "vault":
+        c = await db.credentials.find_one({"id": first.get("id")})
+        if not c:
+            await ws.send_json({"type": "error", "message": "Vault entry not found"})
+            await ws.close(); return
+        host, port, uname = parse_vault_host(c.get("url"), c.get("username"))
+        cfg = {"host": first.get("host") or host, "port": first.get("port") or port,
+               "username": first.get("username") or uname, "password": c.get("password"),
+               "private_key": c.get("ssh_key")}
+    else:
+        cfg = {"host": first.get("host"), "port": first.get("port") or 22,
+               "username": first.get("username"), "password": first.get("password"),
+               "private_key": first.get("private_key")}
+    if not cfg.get("host") or not cfg.get("username"):
+        await ws.send_json({"type": "error", "message": "Host and username are required"})
+        await ws.close(); return
+    await _log_activity("ssh_session", f"Web SSH session opened to {cfg['username']}@{cfg['host']}",
+                        level="info")
+    await run_ssh_session(ws, cfg, int(first.get("cols") or 120), int(first.get("rows") or 32))
+    try:
+        await ws.close()
+    except Exception:
+        pass
 
 
 # =========================================================================
