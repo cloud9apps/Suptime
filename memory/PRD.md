@@ -38,11 +38,16 @@ Self-hosted software for: server uptime, server performance, SSL/domain expiry t
 - Public toggle on each server and domain.
 - Per-metric thresholds in Settings: SSL / domain / latency / CPU / MEM / DISK.
 
+## Iteration 3 — 2026-09-22
+- **Slack / Discord webhook templates**: each webhook has a `format` (json | slack | discord). Slack → header + field blocks with colour attachment; Discord → colour-coded embed with fields. Test-send reports per-webhook format.
+- **Per-server alert overrides**: `alerts_muted` (suppresses email + webhooks, events still logged) and `alert_overrides` {cpu_warn_pct, mem_warn_pct, disk_warn_pct, latency_warn_ms} (null = global). Mute button + rules panel on server detail; form fields in Add/Edit dialog.
+- **Incident comments**: `POST/DELETE /api/activity/{id}/comments[/{cid}]`. Dashboard activity feed lets operator post/delete updates; public status page shows comments (sanitized: no author/meta) under each event with timestamps.
+- Fixed invisible text on Settings outline buttons (Add webhook / Export / Import).
+
 ## Backlog (P1)
-- Public status page (share subset of servers/domains).
-- Multi-recipient email + per-server alert overrides.
-- Historic uptime graph over 7/30 days on the dashboard.
-- Import/export JSON (backup / restore).
+- Multi-recipient email.
+- Scheduled maintenance windows (auto-mute for a time range).
+- Comments on the Domains/SSL events surfaced on Domains page.
 
 ## Backlog (P2)
 - Auth two-factor.
