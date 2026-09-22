@@ -1,0 +1,106 @@
+{
+  "project_context": {
+    "app_type": "Server & Infrastructure Management Dashboard",
+    "theme": "dark_mode_only",
+    "visual_archetype": "Swiss High-Contrast + Retro-Futurism (Terminal/Neo-Brutalism)",
+    "emotional_tone": "Authoritative, Precise, Command-Center, Elite Tech"
+  },
+  "typography": {
+    "primary_font": "Cabinet Grotesk",
+    "primary_font_usage": "Headlines, Page Titles, Dashboard Summary Numbers (H1, H2, H3)",
+    "secondary_font": "IBM Plex Sans",
+    "secondary_font_usage": "Body text, paragraphs, general UI labels, navigation",
+    "mono_font": "JetBrains Mono",
+    "mono_font_usage": "IP Addresses, server metrics (CPU %, RAM %), logs, code blocks, port numbers, dates",
+    "rules": [
+      "H1 size max text-4xl on desktop, tight tracking (tracking-tight).",
+      "Overlines and table headers must be uppercase, tiny, wide spacing (tracking-[0.2em]).",
+      "No Inter or generic fonts for headings."
+    ]
+  },
+  "colors": {
+    "background": {
+      "base": "#050505",
+      "surface": "#111111",
+      "surface_hover": "#161616"
+    },
+    "text": {
+      "primary": "#F3F4F6",
+      "secondary": "#9CA3AF",
+      "tertiary": "#6B7280"
+    },
+    "accents": {
+      "success_uptime": "#00FF66",
+      "error_downtime": "#FF3366",
+      "warning_expiry": "#FFCC00",
+      "primary_action": "#FFFFFF",
+      "primary_action_text": "#000000"
+    },
+    "borders": {
+      "default": "rgba(255, 255, 255, 0.1)",
+      "focus": "rgba(255, 255, 255, 0.3)",
+      "grid": "rgba(255, 255, 255, 0.05)"
+    },
+    "rules": [
+      "No full-screen gradients. Keep it completely flat and solid.",
+      "Never use pure black #000000; stick to #050505.",
+      "Status colors must be highly vibrant (electric) to stand out against the deep dark background."
+    ]
+  },
+  "layouts": {
+    "grid_strategy": "High Density Grid (Mode B)",
+    "spacing_scale": "p-4, p-6 for containers. Inner elements tight gap-2 or gap-4.",
+    "rules": [
+      "Dashboard summary uses 4-col layout on desktop (Summary metrics).",
+      "Server list uses dense data tables or wide 1-col bento rows.",
+      "No soft rounded corners larger than 8px (rounded-md). Prefer crisp edges.",
+      "Use 'Grid Borders (The Technical Look)': container border-collapse, items with border-r border-b using border-grid color."
+    ]
+  },
+  "components": {
+    "surfaces": "Flat variant. Background #111111, 1px solid border (rgba(255,255,255,0.1)), NO drop shadow.",
+    "buttons": "Sharp rectangles or max 4px radius. High contrast: Primary buttons white bg, black text. Secondary buttons #111111 bg with white border.",
+    "inputs": "Flat, 1px border, background #050505. On focus: border changes to white/30.",
+    "charts": "Recharts with mono-font axis labels and thin neon lines (#00FF66 or #FF3366). No fill gradients, just strict line charts.",
+    "tags_badges": "Used for server status. Solid neon dot + mono text. Background transparent. Sharp corners.",
+    "tables": "Dense. Padding py-2 px-3. Mono-font for numerical data columns. Hover state highlights entire row background to #161616."
+  },
+  "motion": {
+    "hover_states": "Border color brighten. Subtle bg color shift.",
+    "transitions": "Instant or 150ms ease-out. No slow swooping animations. It must feel like a fast terminal. Use purely for state changes.",
+    "loading": "Use monospace ASCII loaders or simple sharp spinners. No generic pulse circles."
+  },
+  "icons_and_media": {
+    "icon_library": "lucide-react",
+    "icon_style": "Sharp, thin stroke (1.5px), monochrome unless indicating specific status (red for error).",
+    "image_urls": {
+      "auth_background": {
+        "url": "https://images.unsplash.com/photo-1644088379091-d574269d422f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwxfHxjeWJlciUyMG5ldHdvcmslMjBhYnN0cmFjdHxlbnwwfHx8fDE3OTAwOTczODd8MA&ixlib=rb-4.1.0&q=85",
+        "category": "Auth Screen Background",
+        "description": "Abstract cyber network lines for the login screen background (must use with deep black overlay)."
+      }
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure all text meets APCA standards. Dimmed text must be readable.",
+    "focus": "Visible 1px solid white ring on all interactive elements via focus-visible.",
+    "testing": "All interactive elements MUST include data-testid attribute (kebab-case, role-based)."
+  },
+  "instructions_to_main_agent": [
+    "You are building a premium, dark-mode-first server/infrastructure dashboard.",
+    "CRITICAL: The codebase uses .js/.jsx files, not .tsx. Do not output TypeScript.",
+    "Avoid generic 'SaaS dashboard' looks. Embrace a command-center, technical aesthetic (Grid Borders, Monospace data, Sharp edges).",
+    "Use pure HTML/Tailwind for the main grid layouts, rely on Shadcn UI (customized heavily for flat/dark mode) for Select, Dialog, Tables.",
+    "DO NOT use clear/transparent backgrounds for headers or sticky elements; use solid #050505.",
+    "Data displays (IPs, uptime %, ports, expiry dates) MUST use JetBrains Mono.",
+    "Use Recharts for performance metrics (CPU, RAM). Keep the lines thin and vibrant against dark backgrounds.",
+    "Implement data-testid on every button, link, and form input."
+  ],
+  "general_ui_ux_guidelines": [
+    "Optical alignment over geometrical alignment.",
+    "Never center-align paragraphs or dense metric tables.",
+    "Avoid generic AI emojis in the UI.",
+    "Create depth through layering borders and subtle background shades, not drop shadows.",
+    "Apply 'data-testid' to all key interactive elements for testability."
+  ]
+}
