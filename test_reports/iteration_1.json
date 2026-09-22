@@ -1,0 +1,35 @@
+{
+  "summary": "End-to-end smoke test of Sentinel Monitor backend + frontend. All 13 requested flows verified successfully against public URL. Auth (login/me/logout), Dashboard, Servers CRUD + force-check + history, Agent metrics push, Domains SSL+WHOIS check (both resolved), Credentials CRUD, Notes CRUD, Notification settings + Resend test (email_ok=true), Activity feed, and full sidebar navigation (Servers, Domains, Vault, Notes, Alerts) all pass with zero console errors.",
+  "tested_scope": ["backend", "frontend", "auth", "integration"],
+  "passed": [
+    "POST /api/auth/login with admin@sentinel.app / admin123 -> returns access_token + user",
+    "GET /api/auth/me returns seeded admin",
+    "POST /api/auth/logout -> {ok:true}",
+    "GET /api/dashboard -> servers + domains summary counts",
+    "POST /api/servers (check_kind=https, target=https://www.google.com) -> created, appears in GET /api/servers",
+    "POST /api/servers/{id}/check -> ok:true, status_code:200, latency ~217ms",
+    "GET /api/servers/{id}/history -> 2 checks (scheduler + forced)",
+    "POST /api/servers with agent_enabled=true returns agent_token",
+    "POST /api/agent/metrics with server_id+agent_token+cpu/mem/disk/uptime/load_avg -> {ok:true}, persists to history",
+    "POST /api/domains (google.com) then POST /api/domains/{id}/check -> ssl.days_remaining=65, whois.days_remaining=722 (both ok)",
+    "GET /api/domains reflects ssl + whois populated",
+    "Credentials POST/PUT/DELETE all succeed",
+    "Notes POST/PUT/DELETE all succeed",
+    "GET/PUT /api/settings/notifications work; POST /api/settings/notifications/test -> email_ok:true, webhook_ok:false (as expected, webhook disabled)",
+    "GET /api/activity returns list",
+    "Frontend login flow via UI (data-testid selectors) succeeds and redirects to /",
+    "Sidebar navigation to /servers, /domains, /vault, /notes, /settings all render without console errors"
+  ],
+  "failed": [],
+  "warnings": [
+    {
+      "area": "Review request schema mismatch",
+      "issue": "Review request referenced field 'type' for POST /api/servers, but the actual ServerIn schema uses 'check_kind'. Similarly AgentMetricsIn uses 'server_id' + 'cpu_percent/mem_percent/disk_percent' + uptime:str (not 'cpu/memory/disk' + uptime:int). Tests were adjusted to use actual schema and all passed. No code fix needed.",
+      "priority": "LOW"
+    }
+  ],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true
+}
