@@ -9,6 +9,7 @@ import DomainsPage from "@/pages/DomainsPage";
 import VaultPage from "@/pages/VaultPage";
 import NotesPage from "@/pages/NotesPage";
 import SettingsPage from "@/pages/SettingsPage";
+import PublicStatusPage from "@/pages/PublicStatusPage";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/status/:slug" element={<PublicStatusPage />} />
           <Route path="/login" element={<Public><LoginPage /></Public>} />
           <Route element={<Protected><AppLayout /></Protected>}>
             <Route index element={<DashboardPage />} />

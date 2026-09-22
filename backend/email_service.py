@@ -1,12 +1,17 @@
-"""Alert email sender (Resend via Emergent proxy)."""
+"""Alert email sender (Resend via Emergent proxy) + optional SMTP."""
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 import logging
 import os
 import re
+import smtplib
+import ssl as _ssl
+from email.message import EmailMessage
 from html import escape
 from html.parser import HTMLParser
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
@@ -180,3 +185,147 @@ async def fire_webhook(url: str, payload: dict) -> bool:
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return False
+
+
+async def send_smtp_email(smtp_cfg: dict, to: str, subject: str, html: str) -> bool:
+    """Send via user's own SMTP server. smtp_cfg: {host, port, username, password, from_email, use_tls}."""
+    _assert_safe_email(subject, html)
+    host = smtp_cfg.get("host")
+    port = int(smtp_cfg.get("port") or 587)
+    username = smtp_cfg.get("username") or ""
+    password = smtp_cfg.get("password") or ""
+    from_email = smtp_cfg.get("from_email") or username
+    use_tls = bool(smtp_cfg.get("use_tls", True))
+    if not host or not from_email:
+        raise ValueError("SMTP host and from_email required")
+
+    def _send() -> bool:
+        msg = EmailMessage()
+        msg["From"] = from_email
+        msg["To"] = to
+        msg["Subject"] = subject
+        msg.set_content("This message requires an HTML-capable email client.")
+        msg.add_alternative(html, subtype="html")
+        if port == 465:
+            with smtplib.SMTP_SSL(host, port, context=_ssl.create_default_context(),
+                                  timeout=30) as s:
+                if username:
+                    s.login(username, password)
+                s.send_message(msg)
+        else:
+            with smtplib.SMTP(host, port, timeout=30) as s:
+                s.ehlo()
+                if use_tls:
+                    s.starttls(context=_ssl.create_default_context())
+                    s.ehlo()
+                if username:
+                    s.login(username, password)
+                s.send_message(msg)
+        return True
+
+    return await asyncio.to_thread(_send)
+
+
+def _shell(subject: str, accent: str, title: str, body_html: str) -> str:
+    """Common HTML wrapper."""
+    return (
+        '<table role="presentation" width="100%" '
+        'style="font-family:Arial,sans-serif;background:#050505;color:#F3F4F6">'
+        '<tr><td style="padding:24px">'
+        f'<h2 style="margin:0 0 12px 0;color:{accent}">{escape(title)}</h2>'
+        f'{body_html}'
+        '<p style="font-size:12px;color:#888">Sent by Sentinel Monitor. '
+        'We never ask for your password or credentials by email.</p>'
+        '</td></tr></table>'
+    )
+
+
+def build_server_recovered_email(server_name: str, target: str) -> tuple[str, str]:
+    subject = f"[Sentinel] Recovered: {server_name} is UP"
+    body = (
+        f'<p><strong>{escape(server_name)}</strong> is back online.</p>'
+        f'<p style="font-family:monospace;background:#111;padding:12px;'
+        f'border-left:3px solid #00FF66">target: {escape(target)}</p>'
+    )
+    return subject, _shell(subject, "#00FF66", "Server Recovered", body)
+
+
+def build_metric_high_email(server_name: str, metric: str, value: float,
+                            threshold: int) -> tuple[str, str]:
+    subject = f"[Sentinel] High {metric.upper()}: {server_name} at {value}%"
+    body = (
+        f'<p><strong>{escape(server_name)}</strong> reports '
+        f'<strong>{metric.upper()} = {value}%</strong> '
+        f'(threshold {threshold}%).</p>'
+    )
+    return subject, _shell(subject, "#FFCC00", f"High {metric.upper()}", body)
+
+
+def build_metric_recovered_email(server_name: str, metric: str, value: float) -> tuple[str, str]:
+    subject = f"[Sentinel] {metric.upper()} normal: {server_name}"
+    body = (
+        f'<p><strong>{escape(server_name)}</strong> '
+        f'{metric.upper()} back to {value}%.</p>'
+    )
+    return subject, _shell(subject, "#00FF66", f"{metric.upper()} Recovered", body)
+
+
+def build_latency_high_email(server_name: str, latency_ms: int,
+                             threshold: int) -> tuple[str, str]:
+    subject = f"[Sentinel] Slow response: {server_name} at {latency_ms}ms"
+    body = (
+        f'<p><strong>{escape(server_name)}</strong> latency '
+        f'<strong>{latency_ms}ms</strong> exceeded threshold '
+        f'{threshold}ms.</p>'
+    )
+    return subject, _shell(subject, "#FFCC00", "Slow Response", body)
+
+
+def build_digest_email(stats: dict) -> tuple[str, str]:
+    subject = "[Sentinel] Weekly digest"
+    servers = stats.get("servers", [])
+    domains = stats.get("domains", [])
+    ssl_soon = stats.get("ssl_soon", [])
+    domain_soon = stats.get("domain_soon", [])
+    incidents = stats.get("incidents", [])
+
+    def rows(items, cols):
+        if not items:
+            return '<tr><td style="padding:8px;color:#888">— none —</td></tr>'
+        return "".join(
+            "<tr>" + "".join(
+                f'<td style="padding:6px 12px;border-top:1px solid #222">{escape(str(it.get(c, "")))}</td>'
+                for c in cols
+            ) + "</tr>"
+            for it in items
+        )
+
+    body = (
+        '<p>Here is your weekly fleet summary.</p>'
+        '<h3 style="margin-top:20px;color:#00FF66">Servers</h3>'
+        '<table role="presentation" width="100%" style="background:#111;color:#F3F4F6">'
+        '<tr><th style="text-align:left;padding:6px 12px">Name</th>'
+        '<th style="text-align:left;padding:6px 12px">Uptime 7d</th>'
+        '<th style="text-align:left;padding:6px 12px">Status</th></tr>'
+        f'{rows(servers, ["name", "uptime_pct_7d", "last_status"])}'
+        '</table>'
+        '<h3 style="margin-top:20px;color:#FFCC00">SSL expiring soon</h3>'
+        '<table role="presentation" width="100%" style="background:#111;color:#F3F4F6">'
+        '<tr><th style="text-align:left;padding:6px 12px">Domain</th>'
+        '<th style="text-align:left;padding:6px 12px">Days</th></tr>'
+        f'{rows(ssl_soon, ["domain", "days_remaining"])}'
+        '</table>'
+        '<h3 style="margin-top:20px;color:#FFCC00">Domains expiring soon</h3>'
+        '<table role="presentation" width="100%" style="background:#111;color:#F3F4F6">'
+        '<tr><th style="text-align:left;padding:6px 12px">Domain</th>'
+        '<th style="text-align:left;padding:6px 12px">Days</th></tr>'
+        f'{rows(domain_soon, ["domain", "days_remaining"])}'
+        '</table>'
+        '<h3 style="margin-top:20px;color:#FF3366">Incidents (7d)</h3>'
+        '<table role="presentation" width="100%" style="background:#111;color:#F3F4F6">'
+        '<tr><th style="text-align:left;padding:6px 12px">When</th>'
+        '<th style="text-align:left;padding:6px 12px">Event</th></tr>'
+        f'{rows(incidents, ["when", "message"])}'
+        '</table>'
+    )
+    return subject, _shell(subject, "#00FF66", "Weekly Digest", body)

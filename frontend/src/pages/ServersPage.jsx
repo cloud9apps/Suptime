@@ -47,6 +47,7 @@ const EMPTY = {
   ssh_password: "",
   ssh_private_key: "",
   agent_enabled: false,
+  public: false,
 };
 
 export default function ServersPage() {
@@ -499,6 +500,12 @@ function ServerFormDialog({ form, setForm, onSave, busy, editing }) {
           </div>
           <div className="text-[11px] text-white/40 mt-1">
             Generates a per-server token. Copy install snippet after save.
+          </div>
+        </div>
+        <div className="col-span-2 border-t border-white/10 pt-4">
+          <div className="flex items-center justify-between">
+            <Label className="font-mono-s text-[11px] uppercase tracking-[0.2em]">Show on public status page</Label>
+            <Switch checked={form.public} onCheckedChange={(v) => set("public", v)} data-testid="public-server-toggle" />
           </div>
         </div>
       </div>

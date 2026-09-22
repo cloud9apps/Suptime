@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -25,8 +26,14 @@ from email_service import (
     build_domain_expiry_email,
     build_server_down_email,
     build_ssl_expiry_email,
+    build_server_recovered_email,
+    build_metric_high_email,
+    build_metric_recovered_email,
+    build_latency_high_email,
+    build_digest_email,
     fire_webhook,
     send_alert_email,
+    send_smtp_email,
 )
 from monitor import (
     check_domain_whois,
@@ -84,6 +91,7 @@ class ServerIn(BaseModel):
     ssh_password: Optional[str] = None
     ssh_private_key: Optional[str] = None
     agent_enabled: bool = False
+    public: bool = False
 
 
 class DomainIn(BaseModel):
@@ -91,6 +99,7 @@ class DomainIn(BaseModel):
     track_ssl: bool = True
     track_whois: bool = True
     notes: Optional[str] = None
+    public: bool = False
 
 
 class CredentialIn(BaseModel):
@@ -111,13 +120,38 @@ class NoteIn(BaseModel):
     tags: list[str] = []
 
 
+class WebhookEntry(BaseModel):
+    id: Optional[str] = None
+    name: str = ""
+    url: str
+    enabled: bool = True
+
+
+class SmtpConfig(BaseModel):
+    enabled: bool = False
+    host: Optional[str] = None
+    port: int = 587
+    username: Optional[str] = None
+    password: Optional[str] = None
+    from_email: Optional[str] = None
+    use_tls: bool = True
+
+
 class NotificationSettingsIn(BaseModel):
     email_enabled: bool = False
     email_recipient: Optional[str] = None
-    webhook_enabled: bool = False
-    webhook_url: Optional[str] = None
+    webhooks: list[WebhookEntry] = []
+    smtp: SmtpConfig = SmtpConfig()
     ssl_warn_days: int = 14
     domain_warn_days: int = 30
+    cpu_warn_pct: int = 90
+    mem_warn_pct: int = 90
+    disk_warn_pct: int = 90
+    latency_warn_ms: int = 3000
+    digest_enabled: bool = False
+    public_page_enabled: bool = False
+    public_page_slug: Optional[str] = None
+    public_page_title: str = "Sentinel Status"
 
 
 class AgentMetricsIn(BaseModel):
@@ -137,29 +171,50 @@ class AgentMetricsIn(BaseModel):
 async def _get_notification_settings() -> dict:
     doc = await db.settings.find_one({"_id": "notifications"}) or {}
     doc.pop("_id", None)
+    # Backfill from legacy single-webhook shape
+    webhooks = doc.get("webhooks")
+    if webhooks is None:
+        legacy_url = doc.get("webhook_url")
+        legacy_on = doc.get("webhook_enabled", False)
+        webhooks = ([{"id": new_id(), "name": "default", "url": legacy_url,
+                      "enabled": bool(legacy_on)}] if legacy_url else [])
     return {
         "email_enabled": doc.get("email_enabled", False),
         "email_recipient": doc.get("email_recipient"),
-        "webhook_enabled": doc.get("webhook_enabled", False),
-        "webhook_url": doc.get("webhook_url"),
+        "webhooks": webhooks,
+        "smtp": doc.get("smtp") or {"enabled": False, "host": None, "port": 587,
+                                    "username": None, "password": None,
+                                    "from_email": None, "use_tls": True},
         "ssl_warn_days": doc.get("ssl_warn_days", 14),
         "domain_warn_days": doc.get("domain_warn_days", 30),
+        "cpu_warn_pct": doc.get("cpu_warn_pct", 90),
+        "mem_warn_pct": doc.get("mem_warn_pct", 90),
+        "disk_warn_pct": doc.get("disk_warn_pct", 90),
+        "latency_warn_ms": doc.get("latency_warn_ms", 3000),
+        "digest_enabled": doc.get("digest_enabled", False),
+        "public_page_enabled": doc.get("public_page_enabled", False),
+        "public_page_slug": doc.get("public_page_slug"),
+        "public_page_title": doc.get("public_page_title", "Sentinel Status"),
     }
 
 
 async def _dispatch_alert(kind: str, subject: str, html: str, payload: dict) -> None:
     settings = await _get_notification_settings()
     if settings["email_enabled"] and settings["email_recipient"]:
+        smtp = settings.get("smtp") or {}
         try:
-            await send_alert_email(settings["email_recipient"], subject, html)
+            if smtp.get("enabled") and smtp.get("host"):
+                await send_smtp_email(smtp, settings["email_recipient"], subject, html)
+            else:
+                await send_alert_email(settings["email_recipient"], subject, html)
         except Exception as e:
             logger.error(f"Alert email failed: {e}")
-    if settings["webhook_enabled"] and settings["webhook_url"]:
-        try:
-            await fire_webhook(settings["webhook_url"],
-                               {"kind": kind, "subject": subject, **payload})
-        except Exception as e:
-            logger.error(f"Webhook failed: {e}")
+    for wh in settings.get("webhooks", []):
+        if wh.get("enabled") and wh.get("url"):
+            try:
+                await fire_webhook(wh["url"], {"kind": kind, "subject": subject, **payload})
+            except Exception as e:
+                logger.error(f"Webhook failed ({wh.get('name')}): {e}")
 
 
 async def _log_activity(kind: str, message: str, level: str = "info",
@@ -273,6 +328,7 @@ async def ssh_metrics_now(server_id: str, user: dict = Depends(get_current_user)
             "id": new_id(), "server_id": server_id, "source": "ssh",
             "at": now_iso(), **{k: v for k, v in m.items() if k != "ok"},
         })
+        await _check_metric_alerts(s, m)
     return m
 
 
@@ -291,7 +347,54 @@ async def agent_push_metrics(body: AgentMetricsIn):
         "disk_percent": body.disk_percent, "load_avg": body.load_avg,
         "uptime": body.uptime, "error": None,
     })
+    await _check_metric_alerts(s, {
+        "cpu_percent": body.cpu_percent, "mem_percent": body.mem_percent,
+        "disk_percent": body.disk_percent,
+    })
     return {"ok": True}
+
+
+async def _check_metric_alerts(s: dict, m: dict) -> None:
+    """Fire alerts on high CPU / MEM / DISK, and recovery when back to normal."""
+    settings = await _get_notification_settings()
+    thresholds = {
+        "cpu": settings["cpu_warn_pct"],
+        "mem": settings["mem_warn_pct"],
+        "disk": settings["disk_warn_pct"],
+    }
+    values = {
+        "cpu": m.get("cpu_percent"),
+        "mem": m.get("mem_percent"),
+        "disk": m.get("disk_percent"),
+    }
+    state = s.get("alert_state") or {}
+    updates: dict = {}
+    for kind, thresh in thresholds.items():
+        v = values[kind]
+        if v is None:
+            continue
+        was_high = bool(state.get(f"high_{kind}"))
+        is_high = v >= thresh
+        if is_high and not was_high:
+            subject, html = build_metric_high_email(s["name"], kind, v, thresh)
+            await _dispatch_alert(f"high_{kind}", subject, html,
+                                  {"server_id": s["id"], "name": s["name"],
+                                   "metric": kind, "value": v, "threshold": thresh})
+            await _log_activity(f"high_{kind}",
+                                f"{s['name']} {kind.upper()} at {v}% (≥{thresh}%)",
+                                level="warning", meta={"server_id": s["id"]})
+            updates[f"alert_state.high_{kind}"] = True
+        elif was_high and not is_high:
+            subject, html = build_metric_recovered_email(s["name"], kind, v)
+            await _dispatch_alert(f"recovered_{kind}", subject, html,
+                                  {"server_id": s["id"], "name": s["name"],
+                                   "metric": kind, "value": v})
+            await _log_activity(f"recovered_{kind}",
+                                f"{s['name']} {kind.upper()} normal at {v}%",
+                                level="success", meta={"server_id": s["id"]})
+            updates[f"alert_state.high_{kind}"] = False
+    if updates:
+        await db.servers.update_one({"id": s["id"]}, {"$set": updates})
 
 
 async def _run_server_check(s: dict) -> dict:
@@ -305,7 +408,6 @@ async def _run_server_check(s: dict) -> dict:
     await db.checks.insert_one({
         "id": new_id(), "server_id": s["id"], "at": at, **result,
     })
-    # 24h uptime %
     since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
     total = await db.checks.count_documents({"server_id": s["id"], "at": {"$gte": since}})
     ups = await db.checks.count_documents({"server_id": s["id"], "at": {"$gte": since}, "ok": True})
@@ -326,9 +428,37 @@ async def _run_server_check(s: dict) -> dict:
                             f"{s['name']} went DOWN ({result['error']})",
                             level="error", meta={"server_id": s["id"]})
     elif prev_status == "down" and new_status == "up":
+        subject, html = build_server_recovered_email(s["name"], target)
+        await _dispatch_alert("server_recovered", subject, html,
+                              {"server_id": s["id"], "name": s["name"],
+                               "target": target})
         await _log_activity("server_up",
                             f"{s['name']} is back UP",
                             level="success", meta={"server_id": s["id"]})
+    # Latency alert (only when up)
+    if result["ok"] and result.get("latency_ms") is not None:
+        settings = await _get_notification_settings()
+        thresh = int(settings.get("latency_warn_ms", 3000))
+        state = s.get("alert_state") or {}
+        was_slow = bool(state.get("high_latency"))
+        is_slow = result["latency_ms"] >= thresh
+        if is_slow and not was_slow:
+            subject, html = build_latency_high_email(s["name"], result["latency_ms"], thresh)
+            await _dispatch_alert("high_latency", subject, html,
+                                  {"server_id": s["id"], "name": s["name"],
+                                   "latency_ms": result["latency_ms"],
+                                   "threshold": thresh})
+            await _log_activity("high_latency",
+                                f"{s['name']} latency {result['latency_ms']}ms (≥{thresh}ms)",
+                                level="warning", meta={"server_id": s["id"]})
+            await db.servers.update_one({"id": s["id"]},
+                                        {"$set": {"alert_state.high_latency": True}})
+        elif was_slow and not is_slow:
+            await _log_activity("recovered_latency",
+                                f"{s['name']} latency back to {result['latency_ms']}ms",
+                                level="success", meta={"server_id": s["id"]})
+            await db.servers.update_one({"id": s["id"]},
+                                        {"$set": {"alert_state.high_latency": False}})
     return {**result, "server_id": s["id"], "at": at,
             "uptime_pct_24h": uptime_pct}
 
@@ -497,38 +627,238 @@ async def get_settings(user: dict = Depends(get_current_user)):
 async def put_settings(body: NotificationSettingsIn,
                        user: dict = Depends(get_current_user)):
     doc = body.model_dump()
+    # Ensure each webhook has an id
+    for wh in doc.get("webhooks", []):
+        if not wh.get("id"):
+            wh["id"] = new_id()
+    if doc.get("public_page_slug"):
+        doc["public_page_slug"] = re.sub(
+            r"[^a-z0-9-]", "", doc["public_page_slug"].lower())
     await db.settings.update_one(
         {"_id": "notifications"}, {"$set": doc}, upsert=True
     )
-    return doc
+    return await _get_notification_settings()
 
 
 @app.post("/api/settings/notifications/test")
 async def test_notifications(user: dict = Depends(get_current_user)):
     settings = await _get_notification_settings()
     email_ok = False
-    webhook_ok = False
+    webhook_results = []
+    test_subject = "[Sentinel] Test alert"
+    test_html = (
+        '<table role="presentation" width="100%" style="font-family:Arial,sans-serif;'
+        'background:#050505;color:#F3F4F6"><tr><td style="padding:24px">'
+        '<h2 style="margin:0 0 12px 0;color:#00FF66">Test alert</h2>'
+        '<p>If you see this, your Sentinel email alerts are working.</p>'
+        '<p style="font-size:12px;color:#888">Sent by Sentinel Monitor.</p>'
+        '</td></tr></table>'
+    )
     if settings["email_enabled"] and settings["email_recipient"]:
+        smtp = settings.get("smtp") or {}
         try:
-            eid = await send_alert_email(
-                settings["email_recipient"],
-                "[Sentinel] Test alert",
-                '<table role="presentation" width="100%" style="font-family:Arial,sans-serif;'
-                'background:#050505;color:#F3F4F6"><tr><td style="padding:24px">'
-                '<h2 style="margin:0 0 12px 0;color:#00FF66">Test alert</h2>'
-                '<p>If you see this, your Sentinel email alerts are working.</p>'
-                '<p style="font-size:12px;color:#888">Sent by Sentinel Monitor.</p>'
-                '</td></tr></table>',
-            )
-            email_ok = bool(eid)
+            if smtp.get("enabled") and smtp.get("host"):
+                email_ok = await send_smtp_email(
+                    smtp, settings["email_recipient"], test_subject, test_html)
+            else:
+                eid = await send_alert_email(
+                    settings["email_recipient"], test_subject, test_html)
+                email_ok = bool(eid)
         except Exception as e:
             logger.error(f"Test email failed: {e}")
-    if settings["webhook_enabled"] and settings["webhook_url"]:
-        webhook_ok = await fire_webhook(
-            settings["webhook_url"],
-            {"kind": "test", "message": "Sentinel test webhook"},
-        )
-    return {"email_ok": email_ok, "webhook_ok": webhook_ok}
+    for wh in settings.get("webhooks", []):
+        if wh.get("enabled") and wh.get("url"):
+            ok = await fire_webhook(
+                wh["url"], {"kind": "test", "message": "Sentinel test webhook"})
+            webhook_results.append({"name": wh.get("name") or "webhook",
+                                    "url": wh["url"], "ok": ok})
+    return {"email_ok": email_ok, "webhook_results": webhook_results}
+
+
+# =========================================================================
+# Uptime history (7d / 30d bars)
+# =========================================================================
+
+@app.get("/api/uptime/history")
+async def uptime_history(days: int = 30, user: dict = Depends(get_current_user)):
+    """Per-server per-day uptime %."""
+    days = max(1, min(days, 90))
+    now = datetime.now(timezone.utc)
+    since = (now - timedelta(days=days)).isoformat()
+    servers = await db.servers.find({}, {"_id": 0}).to_list(1000)
+    result: list[dict] = []
+    for s in servers:
+        pipeline = [
+            {"$match": {"server_id": s["id"], "at": {"$gte": since}}},
+            {"$group": {
+                "_id": {"$substr": ["$at", 0, 10]},
+                "total": {"$sum": 1},
+                "ups": {"$sum": {"$cond": ["$ok", 1, 0]}},
+            }},
+        ]
+        buckets = await db.checks.aggregate(pipeline).to_list(500)
+        by_day = {b["_id"]: (b["ups"], b["total"]) for b in buckets}
+        series = []
+        for i in range(days - 1, -1, -1):
+            d = (now - timedelta(days=i)).strftime("%Y-%m-%d")
+            ups, total = by_day.get(d, (0, 0))
+            pct = round(ups / total * 100.0, 2) if total else None
+            series.append({"date": d, "pct": pct, "checks": total})
+        result.append({"id": s["id"], "name": s["name"],
+                       "last_status": s.get("last_status"), "series": series})
+    return {"days": days, "servers": result}
+
+
+# =========================================================================
+# Public status page (unauthenticated)
+# =========================================================================
+
+@app.get("/api/public/status/{slug}")
+async def public_status(slug: str):
+    settings = await _get_notification_settings()
+    if not settings.get("public_page_enabled"):
+        raise HTTPException(404, "Status page not enabled")
+    if (settings.get("public_page_slug") or "") != slug:
+        raise HTTPException(404, "Status page not found")
+    servers = await db.servers.find(
+        {"public": True}, {"_id": 0, "ssh_password": 0, "ssh_private_key": 0,
+                           "ssh_username": 0, "ssh_host": 0, "agent_token": 0,
+                           "notes": 0},
+    ).to_list(500)
+    domains = await db.domains.find({"public": True}, {"_id": 0, "notes": 0}).to_list(500)
+    # 7d uptime
+    now = datetime.now(timezone.utc)
+    since = (now - timedelta(days=7)).isoformat()
+    for s in servers:
+        total = await db.checks.count_documents({"server_id": s["id"], "at": {"$gte": since}})
+        ups = await db.checks.count_documents(
+            {"server_id": s["id"], "at": {"$gte": since}, "ok": True})
+        s["uptime_pct_7d"] = round(ups / total * 100.0, 2) if total else None
+    # Recent activity for public servers only
+    activity = await db.activity.find(
+        {"kind": {"$in": ["server_down", "server_up", "ssl_expiring",
+                          "domain_expiring", "high_cpu", "high_mem",
+                          "high_disk", "high_latency", "server_recovered"]}},
+        {"_id": 0},
+    ).sort("created_at", -1).limit(20).to_list(20)
+    return {
+        "title": settings.get("public_page_title") or "Sentinel Status",
+        "generated_at": now.isoformat(),
+        "servers": servers,
+        "domains": domains,
+        "activity": activity,
+    }
+
+
+# =========================================================================
+# Backup export / import
+# =========================================================================
+
+@app.get("/api/backup/export")
+async def backup_export(user: dict = Depends(get_current_user)):
+    servers = await db.servers.find({}, {"_id": 0}).to_list(2000)
+    domains = await db.domains.find({}, {"_id": 0}).to_list(2000)
+    credentials = await db.credentials.find({}, {"_id": 0}).to_list(2000)
+    notes = await db.notes.find({}, {"_id": 0}).to_list(2000)
+    settings = await _get_notification_settings()
+    return {
+        "version": 1,
+        "exported_at": now_iso(),
+        "servers": servers, "domains": domains,
+        "credentials": credentials, "notes": notes,
+        "settings": settings,
+    }
+
+
+class BackupImportIn(BaseModel):
+    version: int = 1
+    servers: list[dict] = []
+    domains: list[dict] = []
+    credentials: list[dict] = []
+    notes: list[dict] = []
+    settings: Optional[dict] = None
+    replace: bool = False
+
+
+@app.post("/api/backup/import")
+async def backup_import(body: BackupImportIn,
+                        user: dict = Depends(get_current_user)):
+    if body.replace:
+        await db.servers.delete_many({})
+        await db.domains.delete_many({})
+        await db.credentials.delete_many({})
+        await db.notes.delete_many({})
+    counts = {"servers": 0, "domains": 0, "credentials": 0, "notes": 0}
+    for coll_name, items in (("servers", body.servers), ("domains", body.domains),
+                             ("credentials", body.credentials), ("notes", body.notes)):
+        coll = db[coll_name]
+        for item in items:
+            item.pop("_id", None)
+            if not item.get("id"):
+                item["id"] = new_id()
+            await coll.update_one({"id": item["id"]}, {"$set": item}, upsert=True)
+            counts[coll_name] += 1
+    if body.settings:
+        s = dict(body.settings); s.pop("_id", None)
+        await db.settings.update_one({"_id": "notifications"},
+                                     {"$set": s}, upsert=True)
+    return {"ok": True, "counts": counts}
+
+
+# =========================================================================
+# Weekly digest
+# =========================================================================
+
+async def _build_digest_data() -> dict:
+    now = datetime.now(timezone.utc)
+    since = (now - timedelta(days=7)).isoformat()
+    servers_docs = await db.servers.find({}, {"_id": 0}).to_list(2000)
+    server_rows = []
+    for s in servers_docs:
+        total = await db.checks.count_documents({"server_id": s["id"], "at": {"$gte": since}})
+        ups = await db.checks.count_documents(
+            {"server_id": s["id"], "at": {"$gte": since}, "ok": True})
+        pct = round(ups / total * 100.0, 2) if total else "—"
+        server_rows.append({"name": s["name"], "uptime_pct_7d": pct,
+                            "last_status": s.get("last_status") or "unknown"})
+    domains_docs = await db.domains.find({}, {"_id": 0}).to_list(2000)
+    settings = await _get_notification_settings()
+    ssl_soon = [{"domain": d["domain"],
+                 "days_remaining": (d.get("ssl") or {}).get("days_remaining")}
+                for d in domains_docs
+                if (d.get("ssl") or {}).get("days_remaining") is not None
+                and (d.get("ssl") or {}).get("days_remaining") <= settings["ssl_warn_days"]]
+    domain_soon = [{"domain": d["domain"],
+                    "days_remaining": (d.get("whois") or {}).get("days_remaining")}
+                   for d in domains_docs
+                   if (d.get("whois") or {}).get("days_remaining") is not None
+                   and (d.get("whois") or {}).get("days_remaining") <= settings["domain_warn_days"]]
+    incidents = await db.activity.find(
+        {"level": {"$in": ["error", "warning"]},
+         "created_at": {"$gte": since}}, {"_id": 0},
+    ).sort("created_at", -1).limit(30).to_list(30)
+    incidents_rows = [{"when": i.get("created_at", "")[:19].replace("T", " "),
+                       "message": i.get("message", "")} for i in incidents]
+    return {"servers": server_rows, "ssl_soon": ssl_soon,
+            "domain_soon": domain_soon, "incidents": incidents_rows}
+
+
+@app.post("/api/settings/notifications/digest")
+async def send_digest(user: dict = Depends(get_current_user)):
+    settings = await _get_notification_settings()
+    if not settings["email_enabled"] or not settings["email_recipient"]:
+        raise HTTPException(400, "Enable email + set recipient first")
+    data = await _build_digest_data()
+    subject, html = build_digest_email(data)
+    smtp = settings.get("smtp") or {}
+    try:
+        if smtp.get("enabled") and smtp.get("host"):
+            ok = await send_smtp_email(smtp, settings["email_recipient"], subject, html)
+            return {"ok": bool(ok)}
+        eid = await send_alert_email(settings["email_recipient"], subject, html)
+        return {"ok": bool(eid)}
+    except Exception as e:
+        raise HTTPException(500, f"Digest send failed: {e}")
 
 
 @app.get("/api/activity")
@@ -623,6 +953,9 @@ async def _scheduler_loop():
                                     "source": "ssh", "at": now_iso(),
                                     **{k: v for k, v in m.items() if k != "ok"},
                                 })
+                                fresh = await db.servers.find_one({"id": s["id"]})
+                                if fresh:
+                                    await _check_metric_alerts(fresh, m)
                         except Exception as e:
                             logger.error(f"SSH metrics failed for {s.get('name')}: {e}")
 

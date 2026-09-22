@@ -17,7 +17,7 @@ import {
 import { Plus, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-const EMPTY = { domain: "", track_ssl: true, track_whois: true, notes: "" };
+const EMPTY = { domain: "", track_ssl: true, track_whois: true, notes: "", public: false };
 
 function statusForDays(days, warnAt) {
   if (days == null) return "unknown";
@@ -107,6 +107,10 @@ export default function DomainsPage() {
                 <div className="flex items-center justify-between">
                   <Label className="text-sm">Track domain (WHOIS)</Label>
                   <Switch checked={form.track_whois} onCheckedChange={(v) => setForm({ ...form, track_whois: v })} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">Show on public status page</Label>
+                  <Switch checked={form.public} onCheckedChange={(v) => setForm({ ...form, public: v })} data-testid="public-domain-toggle" />
                 </div>
                 <div>
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Notes</Label>
