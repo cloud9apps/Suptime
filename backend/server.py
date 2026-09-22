@@ -735,10 +735,15 @@ async def public_status(slug: str):
             {"server_id": s["id"], "at": {"$gte": since}, "ok": True})
         s["uptime_pct_7d"] = round(ups / total * 100.0, 2) if total else None
     # Recent activity for public servers only
+    public_server_ids = [s["id"] for s in servers]
     activity = await db.activity.find(
         {"kind": {"$in": ["server_down", "server_up", "ssl_expiring",
                           "domain_expiring", "high_cpu", "high_mem",
-                          "high_disk", "high_latency", "server_recovered"]}},
+                          "high_disk", "high_latency", "server_recovered"]},
+         "$or": [
+             {"meta.server_id": {"$in": public_server_ids}},
+             {"kind": {"$in": ["ssl_expiring", "domain_expiring"]}},
+         ]},
         {"_id": 0},
     ).sort("created_at", -1).limit(20).to_list(20)
     return {

@@ -27,6 +27,17 @@ Self-hosted software for: server uptime, server performance, SSL/domain expiry t
 - Alert routing: Resend email (managed) + generic webhook, configurable thresholds, test-send button.
 - Activity feed, dashboard summary tiles, terminal-grade dark UI.
 
+## Iteration 2 — 2026-09-22
+- Public shareable status page at `/status/:slug` (only public-flagged servers/domains; activity filtered to public server ids).
+- Uptime History bars on Dashboard (7d / 30d) with per-day colored buckets.
+- Backup Export & Import (JSON) for servers/domains/credentials/notes/settings.
+- Weekly Digest email (manual "send now" button) with per-server 7d uptime, upcoming SSL/domain expirations, incident feed.
+- **SMTP configuration** in Settings: use your own mail server (host/port/user/pass/from/STARTTLS), falls back to managed Resend.
+- **Multiple webhooks** (name + url + enabled) instead of single URL; test endpoint returns per-webhook result.
+- **Richer alerts**: high CPU / MEM / DISK / latency + recovery emails, with state debouncing on the server document.
+- Public toggle on each server and domain.
+- Per-metric thresholds in Settings: SSL / domain / latency / CPU / MEM / DISK.
+
 ## Backlog (P1)
 - Public status page (share subset of servers/domains).
 - Multi-recipient email + per-server alert overrides.
