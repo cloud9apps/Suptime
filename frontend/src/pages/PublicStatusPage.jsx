@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { StatusDot } from "@/components/Chrome";
+import { CommentList } from "@/components/IncidentComments";
 import { Terminal } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -136,16 +137,23 @@ export default function PublicStatusPage() {
             </h2>
             <div className="border border-white/10">
               {data.activity.map((a) => (
-                <div key={a.id}
-                  className="grid grid-cols-[auto_auto_minmax(0,1fr)] gap-4 items-center px-4 py-2.5 border-b border-white/[0.06] last:border-b-0">
-                  <StatusDot status={
-                    a.level === "success" ? "up"
-                      : a.level === "error" ? "down" : "warning"
-                  } />
-                  <div className="font-mono-s text-[10px] text-white/40 w-40">
-                    {new Date(a.created_at).toLocaleString()}
+                <div key={a.id} data-testid={`public-event-${a.id}`}
+                  className="border-b border-white/[0.06] last:border-b-0">
+                  <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] gap-4 items-center px-4 py-2.5">
+                    <StatusDot status={
+                      a.level === "success" ? "up"
+                        : a.level === "error" ? "down" : "warning"
+                    } />
+                    <div className="font-mono-s text-[10px] text-white/40 w-40">
+                      {new Date(a.created_at).toLocaleString()}
+                    </div>
+                    <div className="text-sm text-white/80 truncate">{a.message}</div>
                   </div>
-                  <div className="text-sm text-white/80 truncate">{a.message}</div>
+                  {a.comments?.length > 0 && (
+                    <div className="px-4 pb-3 pl-[calc(1rem+0.5rem+1rem+10rem+1rem)]">
+                      <CommentList comments={a.comments} testidPrefix="public-comment" />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

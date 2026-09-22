@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, RefreshCw, Trash2, Server, Cpu, HardDrive, MemoryStick, ArrowRight } from "lucide-react";
+import { Plus, RefreshCw, Trash2, Server, Cpu, HardDrive, MemoryStick, ArrowRight, Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -48,6 +48,8 @@ const EMPTY = {
   ssh_private_key: "",
   agent_enabled: false,
   public: false,
+  alerts_muted: false,
+  alert_overrides: { cpu_warn_pct: null, mem_warn_pct: null, disk_warn_pct: null, latency_warn_ms: null },
 };
 
 export default function ServersPage() {
@@ -90,8 +92,18 @@ export default function ServersPage() {
 
   const openEdit = (s) => {
     setEditingId(s.id);
-    setForm({ ...EMPTY, ...s });
+    setForm({ ...EMPTY, ...s, alert_overrides: { ...EMPTY.alert_overrides, ...(s.alert_overrides || {}) } });
     setOpen(true);
+  };
+
+  const toggleMute = async (s) => {
+    try {
+      await api.put(`/servers/${s.id}`, { ...EMPTY, ...s, alerts_muted: !s.alerts_muted });
+      toast.success(s.alerts_muted ? "Alerts unmuted" : "Alerts muted");
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e.response?.data?.detail));
+    }
   };
 
   const save = async () => {
@@ -203,7 +215,10 @@ export default function ServersPage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <StatusDot status={s.last_status} />
                     <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{s.name}</div>
+                      <div className="text-sm font-medium truncate flex items-center gap-2">
+                        {s.name}
+                        {s.alerts_muted && <BellOff className="w-3 h-3 text-[#FFCC00] shrink-0" data-testid={`muted-icon-${s.id}`} />}
+                      </div>
                       <div className="font-mono-s text-[11px] text-white/40 truncate">
                         {s.check_kind}://{s.target}
                       </div>
@@ -242,7 +257,21 @@ export default function ServersPage() {
                     {selected.check_kind}://{selected.target}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    onClick={() => toggleMute(selected)}
+                    variant="outline"
+                    data-testid="mute-toggle-btn"
+                    className={`rounded-none bg-transparent h-9 font-mono-s uppercase tracking-[0.15em] text-[10px] ${
+                      selected.alerts_muted
+                        ? "border-[#FFCC00]/50 text-[#FFCC00] hover:bg-[#FFCC00]/10"
+                        : "border-white/20 hover:bg-white/5"
+                    }`}
+                  >
+                    {selected.alerts_muted
+                      ? <><BellOff className="w-3.5 h-3.5 mr-2" /> Muted</>
+                      : <><Bell className="w-3.5 h-3.5 mr-2" /> Mute</>}
+                  </Button>
                   <Button
                     onClick={() => runCheck(selected.id)}
                     variant="outline"
@@ -387,6 +416,26 @@ done`}
                 </div>
               )}
 
+              {(selected.alerts_muted || Object.values(selected.alert_overrides || {}).some((v) => v != null)) && (
+                <div className="border border-[#FFCC00]/30 p-4" data-testid="alert-rules-panel">
+                  <div className="font-mono-s text-[10px] tracking-[0.25em] uppercase text-[#FFCC00] mb-2">
+                    Alert Rules (server-specific)
+                  </div>
+                  <div className="flex flex-wrap gap-2 font-mono-s text-[11px]">
+                    {selected.alerts_muted && (
+                      <span className="border border-[#FFCC00]/40 text-[#FFCC00] px-2 py-1">ALERTS MUTED</span>
+                    )}
+                    {Object.entries(selected.alert_overrides || {})
+                      .filter(([, v]) => v != null)
+                      .map(([k, v]) => (
+                        <span key={k} className="border border-white/15 text-white/70 px-2 py-1">
+                          {k.replace("_warn_pct", "").replace("_warn_ms", "").toUpperCase()} ≥ {v}{k.endsWith("ms") ? "ms" : "%"}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+
               {selected.notes && (
                 <div className="border border-white/10 p-4">
                   <div className="font-mono-s text-[10px] tracking-[0.25em] uppercase text-white/40 mb-2">
@@ -506,6 +555,44 @@ function ServerFormDialog({ form, setForm, onSave, busy, editing }) {
           <div className="flex items-center justify-between">
             <Label className="font-mono-s text-[11px] uppercase tracking-[0.2em]">Show on public status page</Label>
             <Switch checked={form.public} onCheckedChange={(v) => set("public", v)} data-testid="public-server-toggle" />
+          </div>
+        </div>
+
+        <div className="col-span-2 border-t border-white/10 pt-4">
+          <div className="flex items-center justify-between">
+            <Label className="font-mono-s text-[11px] uppercase tracking-[0.2em]">Mute all alerts for this server</Label>
+            <Switch checked={!!form.alerts_muted} onCheckedChange={(v) => set("alerts_muted", v)} data-testid="mute-server-toggle" />
+          </div>
+          <div className="text-[11px] text-white/40 mt-1">
+            Events still appear in the activity feed; email and webhooks are suppressed.
+          </div>
+        </div>
+        <div className="col-span-2">
+          <div className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60 mb-2">
+            Alert threshold overrides <span className="text-white/30">(blank = use global)</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              ["cpu_warn_pct", "CPU %"],
+              ["mem_warn_pct", "MEM %"],
+              ["disk_warn_pct", "DISK %"],
+              ["latency_warn_ms", "Latency ms"],
+            ].map(([k, label]) => (
+              <div key={k}>
+                <Label className="font-mono-s text-[10px] uppercase tracking-[0.15em] text-white/40">{label}</Label>
+                <Input type="number" min={1} placeholder="global"
+                  value={form.alert_overrides?.[k] ?? ""}
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    alert_overrides: {
+                      ...f.alert_overrides,
+                      [k]: e.target.value === "" ? null : parseInt(e.target.value),
+                    },
+                  }))}
+                  data-testid={`override-${k}`}
+                  className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s text-xs h-9 focus-visible:border-white/40 focus-visible:ring-0" />
+              </div>
+            ))}
           </div>
         </div>
       </div>

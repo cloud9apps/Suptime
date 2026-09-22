@@ -77,6 +77,13 @@ def new_id() -> str:
 # Models
 # =========================================================================
 
+class AlertOverrides(BaseModel):
+    cpu_warn_pct: Optional[int] = None
+    mem_warn_pct: Optional[int] = None
+    disk_warn_pct: Optional[int] = None
+    latency_warn_ms: Optional[int] = None
+
+
 class ServerIn(BaseModel):
     name: str
     check_kind: str = Field(..., description="http|https|ping|tcp")
@@ -92,6 +99,8 @@ class ServerIn(BaseModel):
     ssh_private_key: Optional[str] = None
     agent_enabled: bool = False
     public: bool = False
+    alerts_muted: bool = False
+    alert_overrides: AlertOverrides = AlertOverrides()
 
 
 class DomainIn(BaseModel):
@@ -125,6 +134,11 @@ class WebhookEntry(BaseModel):
     name: str = ""
     url: str
     enabled: bool = True
+    format: str = "json"
+
+
+class CommentIn(BaseModel):
+    text: str = Field(..., min_length=1, max_length=500)
 
 
 class SmtpConfig(BaseModel):
@@ -198,7 +212,11 @@ async def _get_notification_settings() -> dict:
     }
 
 
-async def _dispatch_alert(kind: str, subject: str, html: str, payload: dict) -> None:
+async def _dispatch_alert(kind: str, subject: str, html: str, payload: dict,
+                          server: Optional[dict] = None) -> None:
+    if server and server.get("alerts_muted"):
+        logger.info(f"Alert {kind} suppressed — {server.get('name')} is muted")
+        return
     settings = await _get_notification_settings()
     if settings["email_enabled"] and settings["email_recipient"]:
         smtp = settings.get("smtp") or {}
@@ -212,9 +230,15 @@ async def _dispatch_alert(kind: str, subject: str, html: str, payload: dict) -> 
     for wh in settings.get("webhooks", []):
         if wh.get("enabled") and wh.get("url"):
             try:
-                await fire_webhook(wh["url"], {"kind": kind, "subject": subject, **payload})
+                await fire_webhook(wh["url"], {"kind": kind, "subject": subject, **payload},
+                                   wh.get("format") or "json")
             except Exception as e:
                 logger.error(f"Webhook failed ({wh.get('name')}): {e}")
+
+
+def _threshold(s: dict, settings: dict, key: str) -> int:
+    ov = (s.get("alert_overrides") or {}).get(key)
+    return int(ov if ov is not None else settings[key])
 
 
 async def _log_activity(kind: str, message: str, level: str = "info",
@@ -358,9 +382,9 @@ async def _check_metric_alerts(s: dict, m: dict) -> None:
     """Fire alerts on high CPU / MEM / DISK, and recovery when back to normal."""
     settings = await _get_notification_settings()
     thresholds = {
-        "cpu": settings["cpu_warn_pct"],
-        "mem": settings["mem_warn_pct"],
-        "disk": settings["disk_warn_pct"],
+        "cpu": _threshold(s, settings, "cpu_warn_pct"),
+        "mem": _threshold(s, settings, "mem_warn_pct"),
+        "disk": _threshold(s, settings, "disk_warn_pct"),
     }
     values = {
         "cpu": m.get("cpu_percent"),
@@ -379,7 +403,7 @@ async def _check_metric_alerts(s: dict, m: dict) -> None:
             subject, html = build_metric_high_email(s["name"], kind, v, thresh)
             await _dispatch_alert(f"high_{kind}", subject, html,
                                   {"server_id": s["id"], "name": s["name"],
-                                   "metric": kind, "value": v, "threshold": thresh})
+                                   "metric": kind, "value": v, "threshold": thresh}, s)
             await _log_activity(f"high_{kind}",
                                 f"{s['name']} {kind.upper()} at {v}% (≥{thresh}%)",
                                 level="warning", meta={"server_id": s["id"]})
@@ -388,7 +412,7 @@ async def _check_metric_alerts(s: dict, m: dict) -> None:
             subject, html = build_metric_recovered_email(s["name"], kind, v)
             await _dispatch_alert(f"recovered_{kind}", subject, html,
                                   {"server_id": s["id"], "name": s["name"],
-                                   "metric": kind, "value": v})
+                                   "metric": kind, "value": v}, s)
             await _log_activity(f"recovered_{kind}",
                                 f"{s['name']} {kind.upper()} normal at {v}%",
                                 level="success", meta={"server_id": s["id"]})
@@ -423,7 +447,7 @@ async def _run_server_check(s: dict) -> dict:
         subject, html = build_server_down_email(s["name"], target, result["error"] or "")
         await _dispatch_alert("server_down", subject, html,
                               {"server_id": s["id"], "name": s["name"],
-                               "target": target, "error": result["error"]})
+                               "target": target, "error": result["error"]}, s)
         await _log_activity("server_down",
                             f"{s['name']} went DOWN ({result['error']})",
                             level="error", meta={"server_id": s["id"]})
@@ -431,14 +455,14 @@ async def _run_server_check(s: dict) -> dict:
         subject, html = build_server_recovered_email(s["name"], target)
         await _dispatch_alert("server_recovered", subject, html,
                               {"server_id": s["id"], "name": s["name"],
-                               "target": target})
+                               "target": target}, s)
         await _log_activity("server_up",
                             f"{s['name']} is back UP",
                             level="success", meta={"server_id": s["id"]})
     # Latency alert (only when up)
     if result["ok"] and result.get("latency_ms") is not None:
         settings = await _get_notification_settings()
-        thresh = int(settings.get("latency_warn_ms", 3000))
+        thresh = _threshold(s, settings, "latency_warn_ms")
         state = s.get("alert_state") or {}
         was_slow = bool(state.get("high_latency"))
         is_slow = result["latency_ms"] >= thresh
@@ -447,7 +471,7 @@ async def _run_server_check(s: dict) -> dict:
             await _dispatch_alert("high_latency", subject, html,
                                   {"server_id": s["id"], "name": s["name"],
                                    "latency_ms": result["latency_ms"],
-                                   "threshold": thresh})
+                                   "threshold": thresh}, s)
             await _log_activity("high_latency",
                                 f"{s['name']} latency {result['latency_ms']}ms (≥{thresh}ms)",
                                 level="warning", meta={"server_id": s["id"]})
@@ -669,9 +693,12 @@ async def test_notifications(user: dict = Depends(get_current_user)):
     for wh in settings.get("webhooks", []):
         if wh.get("enabled") and wh.get("url"):
             ok = await fire_webhook(
-                wh["url"], {"kind": "test", "message": "Sentinel test webhook"})
+                wh["url"], {"kind": "test", "subject": "Sentinel test alert",
+                            "message": "Sentinel test webhook"},
+                wh.get("format") or "json")
             webhook_results.append({"name": wh.get("name") or "webhook",
-                                    "url": wh["url"], "ok": ok})
+                                    "url": wh["url"], "format": wh.get("format") or "json",
+                                    "ok": ok})
     return {"email_ok": email_ok, "webhook_results": webhook_results}
 
 
@@ -746,6 +773,10 @@ async def public_status(slug: str):
          ]},
         {"_id": 0},
     ).sort("created_at", -1).limit(20).to_list(20)
+    for a in activity:
+        a["comments"] = [{"id": c["id"], "text": c["text"], "created_at": c["created_at"]}
+                         for c in (a.get("comments") or [])]
+        a.pop("meta", None)
     return {
         "title": settings.get("public_page_title") or "Sentinel Status",
         "generated_at": now.isoformat(),
@@ -869,6 +900,27 @@ async def send_digest(user: dict = Depends(get_current_user)):
 @app.get("/api/activity")
 async def get_activity(limit: int = 100, user: dict = Depends(get_current_user)):
     return await db.activity.find({}, {"_id": 0}).sort("created_at", -1).to_list(limit)
+
+
+@app.post("/api/activity/{activity_id}/comments")
+async def add_comment(activity_id: str, body: CommentIn,
+                      user: dict = Depends(get_current_user)):
+    comment = {"id": new_id(), "text": body.text.strip(), "created_at": now_iso(),
+               "author": user.get("name") or user.get("email") or "operator"}
+    r = await db.activity.update_one({"id": activity_id}, {"$push": {"comments": comment}})
+    if not r.matched_count:
+        raise HTTPException(404, "Event not found")
+    return await db.activity.find_one({"id": activity_id}, {"_id": 0})
+
+
+@app.delete("/api/activity/{activity_id}/comments/{comment_id}")
+async def delete_comment(activity_id: str, comment_id: str,
+                         user: dict = Depends(get_current_user)):
+    r = await db.activity.update_one({"id": activity_id},
+                                     {"$pull": {"comments": {"id": comment_id}}})
+    if not r.matched_count:
+        raise HTTPException(404, "Event not found")
+    return await db.activity.find_one({"id": activity_id}, {"_id": 0})
 
 
 @app.get("/api/dashboard")

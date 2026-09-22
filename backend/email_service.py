@@ -177,10 +177,55 @@ def build_domain_expiry_email(domain: str, days_remaining: int, expires_at: str)
     return subject, html
 
 
-async def fire_webhook(url: str, payload: dict) -> bool:
+_KIND_COLORS = {
+    "server_down": ("#FF3366", 0xFF3366), "server_recovered": ("#00FF66", 0x00FF66),
+    "recovered_cpu": ("#00FF66", 0x00FF66), "recovered_mem": ("#00FF66", 0x00FF66),
+    "recovered_disk": ("#00FF66", 0x00FF66), "test": ("#00FF66", 0x00FF66),
+}
+
+
+def _payload_fields(payload: dict) -> list[tuple[str, str]]:
+    skip = {"kind", "subject", "message"}
+    return [(k.replace("_", " "), str(v)) for k, v in payload.items()
+            if k not in skip and v is not None]
+
+
+def build_slack_payload(payload: dict) -> dict:
+    kind = payload.get("kind", "alert")
+    title = payload.get("subject") or payload.get("message") or f"Sentinel {kind}"
+    color = _KIND_COLORS.get(kind, ("#FFCC00", 0xFFCC00))[0]
+    fields = [{"type": "mrkdwn", "text": f"*{k}*\n{v}"} for k, v in _payload_fields(payload)][:10]
+    blocks: list[dict] = [
+        {"type": "header", "text": {"type": "plain_text", "text": title[:150], "emoji": False}},
+    ]
+    if fields:
+        blocks.append({"type": "section", "fields": fields})
+    blocks.append({"type": "context", "elements": [
+        {"type": "mrkdwn", "text": f"Sentinel Monitor · `{kind}`"}]})
+    return {"text": title, "attachments": [{"color": color, "blocks": blocks}]}
+
+
+def build_discord_payload(payload: dict) -> dict:
+    kind = payload.get("kind", "alert")
+    title = payload.get("subject") or payload.get("message") or f"Sentinel {kind}"
+    color = _KIND_COLORS.get(kind, ("#FFCC00", 0xFFCC00))[1]
+    fields = [{"name": k, "value": v[:1024], "inline": True}
+              for k, v in _payload_fields(payload)][:25]
+    return {"username": "Sentinel Monitor", "embeds": [{
+        "title": title[:256], "color": color, "fields": fields,
+        "footer": {"text": f"Sentinel · {kind}"},
+    }]}
+
+
+async def fire_webhook(url: str, payload: dict, fmt: str = "json") -> bool:
+    body = payload
+    if fmt == "slack":
+        body = build_slack_payload(payload)
+    elif fmt == "discord":
+        body = build_discord_payload(payload)
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(url, json=payload)
+            resp = await client.post(url, json=body)
         return 200 <= resp.status_code < 300
     except Exception as e:
         logger.error(f"Webhook error: {e}")

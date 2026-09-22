@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { PageHeader, Metric, StatusDot } from "@/components/Chrome";
+import { IncidentComments } from "@/components/IncidentComments";
 import { Activity, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -132,23 +133,25 @@ export default function DashboardPage() {
               </div>
             ) : (
               activity.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center gap-4 px-4 py-3 border-b border-white/[0.06] hover:bg-white/[0.02]"
-                >
-                  <StatusDot
-                    status={
-                      a.level === "success"
-                        ? "up"
-                        : a.level === "error"
-                        ? "down"
-                        : "warning"
-                    }
-                  />
-                  <div className="font-mono-s text-[10px] text-white/40 w-40 shrink-0">
-                    {new Date(a.created_at).toLocaleString()}
+                <div key={a.id} data-testid={`activity-row-${a.id}`}
+                  className="border-b border-white/[0.06] hover:bg-white/[0.02]">
+                  <div className="flex items-center gap-4 px-4 py-3">
+                    <StatusDot
+                      status={
+                        a.level === "success"
+                          ? "up"
+                          : a.level === "error"
+                          ? "down"
+                          : "warning"
+                      }
+                    />
+                    <div className="font-mono-s text-[10px] text-white/40 w-40 shrink-0">
+                      {new Date(a.created_at).toLocaleString()}
+                    </div>
+                    <div className="text-sm text-white/80 truncate">{a.message}</div>
                   </div>
-                  <div className="text-sm text-white/80 truncate">{a.message}</div>
+                  <IncidentComments event={a}
+                    onUpdated={(updated) => setActivity((list) => list.map((x) => (x.id === updated.id ? updated : x)))} />
                 </div>
               ))
             )}

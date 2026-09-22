@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Send, Save, Plus, Trash2, Download, Upload, Mail, Zap } from "lucide-react";
 
@@ -229,7 +236,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <Button onClick={addWebhook} data-testid="add-webhook-btn"
-              className="rounded-none border border-white/20 bg-transparent hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9 px-3">
+              className="rounded-none border border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9 px-3">
               <Plus className="w-3 h-3 mr-1.5" /> Add webhook
             </Button>
           </div>
@@ -239,7 +246,7 @@ export default function SettingsPage() {
             )}
             {(s.webhooks || []).map((wh, i) => (
               <div key={wh.id || i} data-testid={`webhook-row-${i}`}
-                className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_auto_auto] gap-2 items-center border border-white/[0.06] p-2">
+                className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_minmax(0,120px)_auto_auto] gap-2 items-center border border-white/[0.06] p-2">
                 <Input value={wh.name || ""}
                   onChange={(e) => updateWebhook(i, { name: e.target.value })}
                   placeholder="Slack / Discord / n8n" data-testid={`webhook-name-${i}`}
@@ -248,6 +255,17 @@ export default function SettingsPage() {
                   onChange={(e) => updateWebhook(i, { url: e.target.value })}
                   placeholder="https://hooks.example.com/xyz" data-testid={`webhook-url-${i}`}
                   className="rounded-none bg-[#050505] border-white/10 font-mono-s text-xs h-9 focus-visible:border-white/40 focus-visible:ring-0" />
+                <Select value={wh.format || "json"} onValueChange={(v) => updateWebhook(i, { format: v })}>
+                  <SelectTrigger data-testid={`webhook-format-${i}`}
+                    className="rounded-none bg-[#050505] border-white/10 font-mono-s text-xs h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none bg-[#0a0a0a] border-white/10">
+                    <SelectItem value="json">Raw JSON</SelectItem>
+                    <SelectItem value="slack">Slack blocks</SelectItem>
+                    <SelectItem value="discord">Discord embed</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Switch checked={wh.enabled} onCheckedChange={(v) => updateWebhook(i, { enabled: v })} />
                 <button onClick={() => removeWebhook(i)}
                   className="p-2 border border-white/10 hover:border-[#FF3366]/50 hover:text-[#FF3366] transition-colors">
@@ -256,7 +274,9 @@ export default function SettingsPage() {
               </div>
             ))}
             <div className="text-[11px] text-white/40">
-              POSTs JSON <code className="font-mono-s">{`{kind, subject, ...}`}</code>. All enabled webhooks fire in parallel.
+              <strong className="text-white/60">Raw JSON</strong> POSTs <code className="font-mono-s">{`{kind, subject, ...}`}</code>.
+              Pick <strong className="text-white/60">Slack</strong> or <strong className="text-white/60">Discord</strong> to render
+              alerts as colour-coded blocks / embeds in your channel. All enabled webhooks fire in parallel.
             </div>
           </div>
         </section>
@@ -339,11 +359,11 @@ export default function SettingsPage() {
             </div>
             <div className="flex gap-2">
               <Button onClick={exportBackup} data-testid="export-btn"
-                className="rounded-none border border-white/20 bg-transparent hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9">
+                className="rounded-none border border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9">
                 <Download className="w-3.5 h-3.5 mr-1.5" /> Export
               </Button>
               <Button onClick={() => fileRef.current?.click()} data-testid="import-btn"
-                className="rounded-none border border-white/20 bg-transparent hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9">
+                className="rounded-none border border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9">
                 <Upload className="w-3.5 h-3.5 mr-1.5" /> Import
               </Button>
               <input ref={fileRef} type="file" accept="application/json"
