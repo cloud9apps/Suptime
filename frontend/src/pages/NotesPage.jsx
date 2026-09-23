@@ -68,7 +68,7 @@ export default function NotesPage() {
         description="Ops runbooks, incident post-mortems, provider references. Plain text or markdown."
         actions={
           <Button onClick={create} data-testid="new-note-btn"
-            className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs h-10">
+            className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs h-10">
             <Plus className="w-4 h-4 mr-2" /> New Note
           </Button>
         }
@@ -96,17 +96,17 @@ export default function NotesPage() {
           {selectedId ? (
             <div className="space-y-4">
               <Input value={title} onChange={(e) => setTitle(e.target.value)} data-testid="note-title"
-                className="rounded-none bg-transparent border-0 border-b border-white/10 font-display text-3xl h-auto py-2 focus-visible:ring-0 focus-visible:border-white/40 px-0" />
+                className="rounded-sm bg-transparent border-0 border-b border-white/10 font-display text-3xl h-auto py-2 focus-visible:ring-0 focus-visible:border-white/40 px-0" />
               <Textarea value={content} onChange={(e) => setContent(e.target.value)} data-testid="note-content"
                 rows={20}
-                className="rounded-none bg-[#050505] border-white/10 font-mono-s text-sm focus-visible:border-white/40 focus-visible:ring-0" />
+                className="rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-sm focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
               <div className="flex gap-2">
                 <Button onClick={save} disabled={busy} data-testid="save-note-btn"
-                  className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs h-10">
+                  className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs h-10">
                   <Save className="w-4 h-4 mr-2" /> Save
                 </Button>
                 <Button onClick={() => del(selectedId)} variant="outline"
-                  className="rounded-none border-[#FF3366]/40 bg-transparent text-[#FF3366] hover:bg-[#FF3366]/10 font-mono-s uppercase tracking-[0.15em] text-xs h-10">
+                  className="rounded-sm border-[#FF1744]/40 bg-transparent text-[#FF1744] hover:bg-[#FF1744]/10 font-mono-s uppercase tracking-[0.15em] text-xs h-10">
                   <Trash2 className="w-4 h-4 mr-2" /> Delete
                 </Button>
               </div>

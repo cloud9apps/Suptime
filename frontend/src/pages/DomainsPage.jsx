@@ -86,19 +86,19 @@ export default function DomainsPage() {
             <DialogTrigger asChild>
               <Button
                 data-testid="add-domain-btn"
-                className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs h-10"
+                className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs h-10"
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Domain
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#0a0a0a] border border-white/10 rounded-none max-w-lg">
+            <DialogContent className="bg-[#151822]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[0_16px_64px_rgba(0,0,0,0.6)] max-w-lg">
               <DialogHeader><DialogTitle className="font-display">Track a domain</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <div>
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Domain</Label>
                   <Input value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })}
                     placeholder="example.com" data-testid="domain-input"
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label className="text-sm">Track SSL certificate</Label>
@@ -115,12 +115,12 @@ export default function DomainsPage() {
                 <div>
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Notes</Label>
                   <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
               </div>
               <DialogFooter>
                 <Button onClick={add} disabled={busy || !form.domain} data-testid="save-domain-btn"
-                  className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs">
+                  className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs">
                   {busy ? "Adding..." : "Add"}
                 </Button>
               </DialogFooter>
@@ -130,7 +130,7 @@ export default function DomainsPage() {
       />
 
       <div className="p-6 md:p-10">
-        <div className="border border-white/10">
+        <div className="glass-card">
           <div className="grid grid-cols-12 px-4 py-3 border-b border-white/10 font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/40">
             <div className="col-span-3">Domain</div>
             <div className="col-span-3">SSL expires</div>
@@ -174,14 +174,14 @@ export default function DomainsPage() {
                   <button
                     onClick={() => recheck(d.id)}
                     data-testid={`recheck-domain-${d.id}`}
-                    className="p-1.5 border border-white/10 hover:border-white/40 hover:text-[#00FF66] transition-colors"
+                    className="p-1.5 rounded-sm border border-white/10 hover:border-white/40 hover:text-[#00E676] transition-colors"
                     title="Recheck"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => del(d.id)}
-                    className="p-1.5 border border-white/10 hover:border-[#FF3366]/50 hover:text-[#FF3366] transition-colors"
+                    className="p-1.5 rounded-sm border border-white/10 hover:border-[#FF1744]/50 hover:text-[#FF1744] transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

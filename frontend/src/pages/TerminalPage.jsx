@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Server, KeyRound, Plug, Unplug, Zap } from "lucide-react";
 import { toast } from "sonner";
 
-const INPUT = "mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s text-xs h-9 focus-visible:border-white/40 focus-visible:ring-0";
+const INPUT = "mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-xs h-9 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40";
 const LABEL = "font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60";
 const ADHOC = { host: "", port: 22, username: "root", password: "", private_key: "" };
 
@@ -40,8 +40,10 @@ export default function TerminalPage() {
   useEffect(() => {
     const term = new Terminal({
       cursorBlink: true, fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-      theme: { background: "#050505", foreground: "#F3F4F6", cursor: "#00FF66",
-        selectionBackground: "rgba(0,255,102,0.25)", green: "#00FF66", red: "#FF3366", yellow: "#FFCC00" },
+      theme: { background: "#0B0C10", foreground: "#F8FAFC", cursor: "#00E5FF", cursorAccent: "#0B0C10",
+        selectionBackground: "rgba(0,229,255,0.3)", black: "#0B0C10", red: "#FF1744", green: "#00E676", yellow: "#FFC400",
+        blue: "#3B82F6", magenta: "#B388FF", cyan: "#00E5FF", white: "#F8FAFC", brightBlack: "#475569", brightRed: "#FF4D6D",
+        brightGreen: "#33FFA8", brightYellow: "#FFD54F", brightBlue: "#60A5FA", brightMagenta: "#CBA4FF", brightCyan: "#33EFFF", brightWhite: "#FFFFFF" },
       allowProposedApi: true,
     });
     const fit = new FitAddon();
@@ -123,7 +125,7 @@ export default function TerminalPage() {
               {status}{active && status !== "idle" ? ` · ${active}` : ""}
             </div>
             <Button onClick={disconnect} disabled={status === "idle"} variant="outline" data-testid="disconnect-btn"
-              className="rounded-none border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9">
+              className="rounded-sm border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9">
               <Unplug className="w-3.5 h-3.5 mr-2" /> Disconnect
             </Button>
           </div>
@@ -156,9 +158,9 @@ export default function TerminalPage() {
                   <Input type="password" value={adhoc.password} onChange={(e) => setAdhoc({ ...adhoc, password: e.target.value })} data-testid="adhoc-password" className={INPUT} /></div>
                 <div><Label className={LABEL}>Private key (optional)</Label>
                   <Textarea rows={3} value={adhoc.private_key} onChange={(e) => setAdhoc({ ...adhoc, private_key: e.target.value })} data-testid="adhoc-key"
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s text-[10px] focus-visible:border-white/40 focus-visible:ring-0" /></div>
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-[10px] focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" /></div>
                 <Button onClick={connectAdhoc} data-testid="adhoc-connect-btn"
-                  className="w-full rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-[10px] h-9">
+                  className="w-full rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-[10px] h-9">
                   <Plug className="w-3.5 h-3.5 mr-2" /> Connect
                 </Button>
                 <div className="text-[10px] text-white/30">Not saved anywhere — lives only for this session.</div>
@@ -166,7 +168,7 @@ export default function TerminalPage() {
             )}
           </Group>
         </aside>
-        <div className="min-w-0 min-h-0 bg-[#050505] p-3">
+        <div className="min-w-0 min-h-0 bg-[#0B0C10] p-3">
           <div ref={containerRef} data-testid="xterm-container" className="h-full w-full" />
         </div>
       </div>

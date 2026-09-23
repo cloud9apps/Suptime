@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { StatusDot } from "@/components/Chrome";
 import { CommentList } from "@/components/IncidentComments";
-import { Terminal } from "lucide-react";
+import { Radar } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -30,7 +30,7 @@ export default function PublicStatusPage() {
 
   if (err) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white grid place-items-center">
+      <div className="min-h-screen bg-[#0B0C10] text-white grid place-items-center">
         <div className="text-center">
           <div className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">Not Found</div>
           <div className="font-display text-2xl">{err}</div>
@@ -40,7 +40,7 @@ export default function PublicStatusPage() {
   }
   if (!data) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white grid place-items-center font-mono-s text-xs text-white/60">
+      <div className="min-h-screen bg-[#0B0C10] text-white grid place-items-center font-mono-s text-xs text-white/60">
         <span className="blink">▍</span> loading...
       </div>
     );
@@ -51,21 +51,21 @@ export default function PublicStatusPage() {
     ? "No systems tracked"
     : allUp ? "All systems operational" : "Some systems degraded";
   const overallTone = data.servers.length === 0
-    ? "text-white/60" : allUp ? "text-[#00FF66]" : "text-[#FF3366]";
+    ? "text-white/60" : allUp ? "text-[#00E676]" : "text-[#FF1744]";
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#0B0C10] text-white">
       <div className="max-w-5xl mx-auto px-6 md:px-10 py-12">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 border border-white/20 flex items-center justify-center">
-            <Terminal className="w-5 h-5 text-[#00FF66]" strokeWidth={1.5} />
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-[#B388FF] to-[#00E5FF] shadow-[0_0_20px_rgba(179,136,255,0.35)]">
+            <Radar className="w-5 h-5 text-[#0B0C10]" strokeWidth={2} />
           </div>
           <span className="font-mono-s text-[11px] tracking-[0.3em] uppercase text-white/50">
             {data.title}
           </span>
         </div>
 
-        <div className="border border-white/10 p-8 mb-8">
+        <div className="glass-card p-8 mb-8">
           <div className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/40 mb-3">
             Overall
           </div>
@@ -81,7 +81,7 @@ export default function PublicStatusPage() {
           <h2 className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/50 mb-3">
             Services
           </h2>
-          <div className="border border-white/10">
+          <div className="glass-card">
             {data.servers.length === 0 && (
               <div className="p-10 text-sm text-white/40 font-mono-s">No services listed.</div>
             )}
@@ -111,7 +111,7 @@ export default function PublicStatusPage() {
             <h2 className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/50 mb-3">
               Domains &amp; SSL
             </h2>
-            <div className="border border-white/10">
+            <div className="glass-card">
               {data.domains.map((d) => (
                 <div key={d.id} data-testid={`public-domain-${d.id}`}
                   className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-4 items-center px-4 py-3 border-b border-white/[0.06] last:border-b-0">
@@ -135,7 +135,7 @@ export default function PublicStatusPage() {
             <h2 className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/50 mb-3">
               Recent events
             </h2>
-            <div className="border border-white/10">
+            <div className="glass-card">
               {data.activity.map((a) => (
                 <div key={a.id} data-testid={`public-event-${a.id}`}
                   className="border-b border-white/[0.06] last:border-b-0">

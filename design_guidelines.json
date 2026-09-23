@@ -1,106 +1,108 @@
 {
-  "project_context": {
-    "app_type": "Server & Infrastructure Management Dashboard",
-    "theme": "dark_mode_only",
-    "visual_archetype": "Swiss High-Contrast + Retro-Futurism (Terminal/Neo-Brutalism)",
-    "emotional_tone": "Authoritative, Precise, Command-Center, Elite Tech"
-  },
+  "theme_mode": "dark",
   "typography": {
-    "primary_font": "Cabinet Grotesk",
-    "primary_font_usage": "Headlines, Page Titles, Dashboard Summary Numbers (H1, H2, H3)",
-    "secondary_font": "IBM Plex Sans",
-    "secondary_font_usage": "Body text, paragraphs, general UI labels, navigation",
-    "mono_font": "JetBrains Mono",
-    "mono_font_usage": "IP Addresses, server metrics (CPU %, RAM %), logs, code blocks, port numbers, dates",
-    "rules": [
-      "H1 size max text-4xl on desktop, tight tracking (tracking-tight).",
-      "Overlines and table headers must be uppercase, tiny, wide spacing (tracking-[0.2em]).",
-      "No Inter or generic fonts for headings."
-    ]
+    "google_fonts_import": "@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');",
+    "headings": "Outfit, sans-serif",
+    "body": "Manrope, sans-serif",
+    "data": "JetBrains Mono, monospace",
+    "instructions_to_main_agent": "Use Outfit for all Headings (H1-H6) as Space Grotesk is forbidden for dashboards per E1 rules. Use Manrope for standard body text. Use JetBrains Mono exclusively for data cells, metrics, IP addresses, logs, code, and SSH terminal. Apply tight tracking to headings (tracking-tight) and uppercase wide tracking (tracking-[0.2em]) for small labels."
   },
   "colors": {
-    "background": {
-      "base": "#050505",
-      "surface": "#111111",
-      "surface_hover": "#161616"
-    },
+    "background": "#0B0C10",
+    "surface": "#151822",
+    "surface_elevated": "#1F2332",
+    "border": "rgba(255, 255, 255, 0.1)",
     "text": {
-      "primary": "#F3F4F6",
-      "secondary": "#9CA3AF",
-      "tertiary": "#6B7280"
+      "primary": "#F8FAFC",
+      "secondary": "#94A3B8",
+      "muted": "#475569"
     },
     "accents": {
-      "success_uptime": "#00FF66",
-      "error_downtime": "#FF3366",
-      "warning_expiry": "#FFCC00",
-      "primary_action": "#FFFFFF",
-      "primary_action_text": "#000000"
-    },
-    "borders": {
-      "default": "rgba(255, 255, 255, 0.1)",
-      "focus": "rgba(255, 255, 255, 0.3)",
-      "grid": "rgba(255, 255, 255, 0.05)"
-    },
-    "rules": [
-      "No full-screen gradients. Keep it completely flat and solid.",
-      "Never use pure black #000000; stick to #050505.",
-      "Status colors must be highly vibrant (electric) to stand out against the deep dark background."
-    ]
-  },
-  "layouts": {
-    "grid_strategy": "High Density Grid (Mode B)",
-    "spacing_scale": "p-4, p-6 for containers. Inner elements tight gap-2 or gap-4.",
-    "rules": [
-      "Dashboard summary uses 4-col layout on desktop (Summary metrics).",
-      "Server list uses dense data tables or wide 1-col bento rows.",
-      "No soft rounded corners larger than 8px (rounded-md). Prefer crisp edges.",
-      "Use 'Grid Borders (The Technical Look)': container border-collapse, items with border-r border-b using border-grid color."
-    ]
-  },
-  "components": {
-    "surfaces": "Flat variant. Background #111111, 1px solid border (rgba(255,255,255,0.1)), NO drop shadow.",
-    "buttons": "Sharp rectangles or max 4px radius. High contrast: Primary buttons white bg, black text. Secondary buttons #111111 bg with white border.",
-    "inputs": "Flat, 1px border, background #050505. On focus: border changes to white/30.",
-    "charts": "Recharts with mono-font axis labels and thin neon lines (#00FF66 or #FF3366). No fill gradients, just strict line charts.",
-    "tags_badges": "Used for server status. Solid neon dot + mono text. Background transparent. Sharp corners.",
-    "tables": "Dense. Padding py-2 px-3. Mono-font for numerical data columns. Hover state highlights entire row background to #161616."
-  },
-  "motion": {
-    "hover_states": "Border color brighten. Subtle bg color shift.",
-    "transitions": "Instant or 150ms ease-out. No slow swooping animations. It must feel like a fast terminal. Use purely for state changes.",
-    "loading": "Use monospace ASCII loaders or simple sharp spinners. No generic pulse circles."
-  },
-  "icons_and_media": {
-    "icon_library": "lucide-react",
-    "icon_style": "Sharp, thin stroke (1.5px), monochrome unless indicating specific status (red for error).",
-    "image_urls": {
-      "auth_background": {
-        "url": "https://images.unsplash.com/photo-1644088379091-d574269d422f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwxfHxjeWJlciUyMG5ldHdvcmslMjBhYnN0cmFjdHxlbnwwfHx8fDE3OTAwOTczODd8MA&ixlib=rb-4.1.0&q=85",
-        "category": "Auth Screen Background",
-        "description": "Abstract cyber network lines for the login screen background (must use with deep black overlay)."
-      }
+      "brand": "#B388FF",
+      "brand_glow": "rgba(179, 136, 255, 0.4)",
+      "up": "#00E676",
+      "down": "#FF1744",
+      "warn": "#FFC400",
+      "info": "#00E5FF"
     }
   },
-  "accessibility": {
-    "contrast": "Ensure all text meets APCA standards. Dimmed text must be readable.",
-    "focus": "Visible 1px solid white ring on all interactive elements via focus-visible.",
-    "testing": "All interactive elements MUST include data-testid attribute (kebab-case, role-based)."
+  "component_recipes": {
+    "page_header": "sticky top-0 z-50 w-full backdrop-blur-2xl bg-[#0B0C10]/80 border-b border-white/10 px-6 py-4 flex items-center justify-between",
+    "sidebar_nav": {
+      "container": "flex flex-col w-64 bg-[#0B0C10] border-r border-white/10 h-screen overflow-y-auto p-4 gap-2",
+      "item_active": "flex items-center gap-3 px-3 py-2 text-[#F8FAFC] bg-white/5 rounded-sm border-l-2 border-[#00E5FF] transition-all",
+      "item_inactive": "flex items-center gap-3 px-3 py-2 text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 rounded-sm border-l-2 border-transparent transition-all"
+    },
+    "glass_card": "bg-[#151822]/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.2)] overflow-hidden",
+    "metric_tile": {
+      "base": "flex flex-col p-5 bg-[#151822]/90 backdrop-blur-xl border border-white/10 rounded-xl relative overflow-hidden group transition-all duration-300",
+      "up": "hover:border-[#00E676]/50 hover:shadow-[0_0_20px_rgba(0,230,118,0.15)]",
+      "down": "hover:border-[#FF1744]/50 hover:shadow-[0_0_20px_rgba(255,23,68,0.15)]",
+      "warn": "hover:border-[#FFC400]/50 hover:shadow-[0_0_20px_rgba(255,196,0,0.15)]"
+    },
+    "status_dot": {
+      "up": "w-2.5 h-2.5 rounded-full bg-[#00E676] shadow-[0_0_8px_#00E676]",
+      "down": "w-2.5 h-2.5 rounded-full bg-[#FF1744] shadow-[0_0_8px_#FF1744]",
+      "warn": "w-2.5 h-2.5 rounded-full bg-[#FFC400] shadow-[0_0_8px_#FFC400]"
+    },
+    "status_badge": {
+      "up": "inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-mono font-medium bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20",
+      "down": "inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-mono font-medium bg-[#FF1744]/10 text-[#FF1744] border border-[#FF1744]/20",
+      "warn": "inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-mono font-medium bg-[#FFC400]/10 text-[#FFC400] border border-[#FFC400]/20"
+    },
+    "buttons": {
+      "primary": "inline-flex items-center justify-center px-4 py-2 bg-[#B388FF] hover:bg-[#9965FF] text-[#0B0C10] rounded-sm font-semibold transition-colors shadow-[0_0_15px_rgba(179,136,255,0.3)] focus:ring-2 focus:ring-[#B388FF]/50 focus:outline-none",
+      "secondary": "inline-flex items-center justify-center px-4 py-2 bg-white/5 hover:bg-white/10 text-[#F8FAFC] border border-white/10 hover:border-white/20 rounded-sm font-medium transition-colors focus:ring-2 focus:ring-white/20 focus:outline-none",
+      "danger": "inline-flex items-center justify-center px-4 py-2 bg-[#FF1744]/10 hover:bg-[#FF1744]/20 text-[#FF1744] border border-[#FF1744]/30 rounded-sm font-medium transition-colors focus:ring-2 focus:ring-[#FF1744]/50 focus:outline-none"
+    },
+    "inputs": "flex w-full px-3 py-2 bg-[#0B0C10] border border-white/10 rounded-sm text-[#F8FAFC] placeholder:text-[#475569] focus:outline-none focus:border-[#00E5FF] focus:ring-1 focus:ring-[#00E5FF]/50 transition-all font-mono",
+    "tabs": {
+      "list": "inline-flex h-9 items-center justify-center rounded-sm bg-[#0B0C10] p-1 text-[#94A3B8] border border-white/10",
+      "trigger": "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium transition-all hover:text-[#F8FAFC] data-[state=active]:bg-[#151822] data-[state=active]:text-[#F8FAFC] data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-white/10"
+    },
+    "dialog": "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-white/10 bg-[#151822]/95 backdrop-blur-2xl p-6 shadow-[0_16px_64px_rgba(0,0,0,0.6)] rounded-xl duration-200",
+    "table_list_row_hover": "transition-colors hover:bg-white/[0.03] data-[state=selected]:bg-white/[0.06]",
+    "login_page": "min-h-screen bg-[#0B0C10] flex items-center justify-center p-4 relative overflow-hidden. Use a brand panel side with a deep violet gradient overlay on an abstract dark image, and a glass card login form.",
+    "chart_stroke_colors": {
+      "cpu": "#00E5FF",
+      "memory": "#B388FF",
+      "latency": "#FFC400"
+    }
   },
-  "instructions_to_main_agent": [
-    "You are building a premium, dark-mode-first server/infrastructure dashboard.",
-    "CRITICAL: The codebase uses .js/.jsx files, not .tsx. Do not output TypeScript.",
-    "Avoid generic 'SaaS dashboard' looks. Embrace a command-center, technical aesthetic (Grid Borders, Monospace data, Sharp edges).",
-    "Use pure HTML/Tailwind for the main grid layouts, rely on Shadcn UI (customized heavily for flat/dark mode) for Select, Dialog, Tables.",
-    "DO NOT use clear/transparent backgrounds for headers or sticky elements; use solid #050505.",
-    "Data displays (IPs, uptime %, ports, expiry dates) MUST use JetBrains Mono.",
-    "Use Recharts for performance metrics (CPU, RAM). Keep the lines thin and vibrant against dark backgrounds.",
-    "Implement data-testid on every button, link, and form input."
-  ],
-  "general_ui_ux_guidelines": [
-    "Optical alignment over geometrical alignment.",
-    "Never center-align paragraphs or dense metric tables.",
-    "Avoid generic AI emojis in the UI.",
-    "Create depth through layering borders and subtle background shades, not drop shadows.",
-    "Apply 'data-testid' to all key interactive elements for testability."
+  "xterm_theme": {
+    "background": "#0B0C10",
+    "foreground": "#F8FAFC",
+    "cursor": "#00E5FF",
+    "cursorAccent": "#0B0C10",
+    "selectionBackground": "rgba(0, 229, 255, 0.3)",
+    "black": "#0B0C10",
+    "red": "#FF1744",
+    "green": "#00E676",
+    "yellow": "#FFC400",
+    "blue": "#3B82F6",
+    "magenta": "#B388FF",
+    "cyan": "#00E5FF",
+    "white": "#F8FAFC",
+    "brightBlack": "#475569",
+    "brightRed": "#FF4D6D",
+    "brightGreen": "#33FFA8",
+    "brightYellow": "#FFD54F",
+    "brightBlue": "#60A5FA",
+    "brightMagenta": "#CBA4FF",
+    "brightCyan": "#33EFFF",
+    "brightWhite": "#FFFFFF"
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "DO NOT use `Space Grotesk` font (strictly banned by E1 for dashboards), instead use `Outfit` for headings to maintain a premium geometric tech look. Body must be `Manrope` and data/metrics MUST be `JetBrains Mono`.",
+    "Ensure all data grids, tables, metrics, terminals, and IPs use the `.font-mono` class mapping to JetBrains Mono.",
+    "For .js / .jsx usage ONLY. Do not output .tsx files.",
+    "Cards and panels MUST use the soft-rounded (rounded-xl) glass aesthetic, while ALL form inputs, textareas, and buttons MUST use sharp/near-sharp edges (rounded-sm) to create a premium contrast.",
+    "Apply generous padding (p-6 or p-8) inside `.rounded-xl` cards, while maintaining compact dashboard structures for data-heavy sections.",
+    "Use 1px border-white/10 everywhere to create defined surface edges against the dark background. Do not rely solely on shadows in dark mode.",
+    "All interactive and key informational elements MUST include a `data-testid` attribute.",
+    "Never use a fully transparent header over scrolling content. Always use backdrop-blur and a semi-transparent background color like bg-[#0B0C10]/80.",
+    "Add subtle glow to status dots and active primary buttons using shadow utilities.",
+    "Use Recharts for all dashboard charts applying the specific vivid accent stroke colors defined.",
+    "Use Sonner for toast notifications. Ensure toast container matches the dark glass theme."
   ]
 }

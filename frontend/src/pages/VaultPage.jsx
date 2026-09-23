@@ -99,18 +99,18 @@ export default function VaultPage() {
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button onClick={openNew} data-testid="add-cred-btn"
-                className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs h-10">
+                className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs h-10">
                 <Plus className="w-4 h-4 mr-2" /> Add Credential
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#0a0a0a] border border-white/10 rounded-none max-w-2xl max-h-[90vh] overflow-auto">
+            <DialogContent className="bg-[#151822]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[0_16px_64px_rgba(0,0,0,0.6)] max-w-2xl max-h-[90vh] overflow-auto">
               <DialogHeader><DialogTitle className="font-display">{editingId ? "Edit" : "New"} credential</DialogTitle></DialogHeader>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Category</Label>
                   <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                    <SelectTrigger className="mt-1 rounded-none bg-[#050505] border-white/10"><SelectValue /></SelectTrigger>
-                    <SelectContent className="rounded-none bg-[#0a0a0a] border-white/10">
+                    <SelectTrigger className="mt-1 rounded-sm bg-[#0B0C10] border-white/10"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-sm bg-[#151822] border-white/10">
                       {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{CAT_LABEL[c]}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -118,42 +118,42 @@ export default function VaultPage() {
                 <div>
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Name</Label>
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="cred-name"
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
                 <div className="col-span-2">
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">URL</Label>
                   <Input value={form.url || ""} onChange={(e) => setForm({ ...form, url: e.target.value })}
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
                 <div>
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Username</Label>
                   <Input value={form.username || ""} onChange={(e) => setForm({ ...form, username: e.target.value })}
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
                 <div>
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Password</Label>
                   <Input value={form.password || ""} onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
                 <div className="col-span-2">
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">API Key</Label>
                   <Input value={form.api_key || ""} onChange={(e) => setForm({ ...form, api_key: e.target.value })}
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
                 <div className="col-span-2">
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">SSH Key (PEM)</Label>
                   <Textarea rows={4} value={form.ssh_key || ""} onChange={(e) => setForm({ ...form, ssh_key: e.target.value })}
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s text-xs focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-xs focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
                 <div className="col-span-2">
                   <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Notes</Label>
                   <Textarea rows={3} value={form.notes || ""} onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    className="mt-1 rounded-none bg-[#050505] border-white/10 focus-visible:border-white/40 focus-visible:ring-0" />
+                    className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
                 </div>
               </div>
               <DialogFooter>
                 <Button onClick={save} disabled={busy || !form.name} data-testid="save-cred-btn"
-                  className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs">
+                  className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs">
                   {busy ? "Saving..." : editingId ? "Update" : "Save"}
                 </Button>
               </DialogFooter>
@@ -165,7 +165,7 @@ export default function VaultPage() {
       <div className="px-6 md:px-10 py-6 flex flex-wrap gap-3 items-center border-b border-white/10">
         <Input placeholder="Search credentials..." value={q} onChange={(e) => setQ(e.target.value)}
           data-testid="vault-search"
-          className="rounded-none bg-[#050505] border-white/10 max-w-xs focus-visible:border-white/40 focus-visible:ring-0" />
+          className="rounded-sm bg-[#0B0C10] border-white/10 max-w-xs focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
         <div className="flex gap-1 flex-wrap">
           {["all", ...CATEGORIES].map((c) => (
             <button
@@ -188,26 +188,26 @@ export default function VaultPage() {
           </div>
         )}
         {filtered.map((c) => (
-          <div key={c.id} data-testid={`cred-card-${c.id}`} className="border border-white/10 p-4 hover:border-white/20 transition-colors">
+          <div key={c.id} data-testid={`cred-card-${c.id}`} className="glass-card p-4 hover:border-white/20 transition-colors">
             <div className="flex items-start justify-between mb-3">
               <div className="min-w-0">
-                <div className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-[#00FF66] mb-1">
+                <div className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-[#00E676] mb-1">
                   {CAT_LABEL[c.category] || c.category}
                 </div>
                 <div className="font-display text-lg font-semibold truncate">{c.name}</div>
               </div>
               <div className="flex gap-1 shrink-0">
-                <button onClick={() => openEdit(c)} className="p-1.5 border border-white/10 hover:border-white/40 transition-colors" title="Edit">
+                <button onClick={() => openEdit(c)} className="p-1.5 rounded-sm border border-white/10 hover:border-white/40 transition-colors" title="Edit">
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={() => del(c.id)} className="p-1.5 border border-white/10 hover:border-[#FF3366]/50 hover:text-[#FF3366] transition-colors" title="Delete">
+                <button onClick={() => del(c.id)} className="p-1.5 rounded-sm border border-white/10 hover:border-[#FF1744]/50 hover:text-[#FF1744] transition-colors" title="Delete">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
             {c.url && (
               <Row label="URL" value={c.url} onCopy={() => copy(c.url, "URL")}>
-                <a href={c.url.startsWith("http") ? c.url : `https://${c.url}`} target="_blank" rel="noreferrer" className="text-[#00FF66] hover:underline truncate">
+                <a href={c.url.startsWith("http") ? c.url : `https://${c.url}`} target="_blank" rel="noreferrer" className="text-[#00E676] hover:underline truncate">
                   {c.url}
                 </a>
               </Row>
@@ -233,7 +233,7 @@ export default function VaultPage() {
             )}
             {c.ssh_key && (
               <div className="mt-2">
-                <button onClick={() => copy(c.ssh_key, "SSH key")} className="text-[10px] font-mono-s uppercase tracking-wider text-white/60 hover:text-[#00FF66] flex items-center gap-1">
+                <button onClick={() => copy(c.ssh_key, "SSH key")} className="text-[10px] font-mono-s uppercase tracking-wider text-white/60 hover:text-[#00E676] flex items-center gap-1">
                   <Copy className="w-3 h-3" /> Copy SSH key ({c.ssh_key.length} chars)
                 </button>
               </div>
@@ -262,7 +262,7 @@ function Row({ label, value, onCopy, onToggle, revealed, children }) {
           {revealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
         </button>
       )}
-      <button onClick={onCopy} className="p-1 text-white/50 hover:text-[#00FF66] transition-colors">
+      <button onClick={onCopy} className="p-1 text-white/50 hover:text-[#00E676] transition-colors">
         <Copy className="w-3.5 h-3.5" />
       </button>
     </div>

@@ -9,7 +9,7 @@ export function CommentList({ comments, onDelete, testidPrefix = "comment" }) {
     <div className="space-y-1.5">
       {comments.map((c) => (
         <div key={c.id} data-testid={`${testidPrefix}-${c.id}`}
-          className="flex items-start gap-2 border-l-2 border-[#00FF66]/40 pl-3 py-1">
+          className="flex items-start gap-2 border-l-2 border-[#00E676]/40 pl-3 py-1">
           <div className="min-w-0 flex-1">
             <div className="font-mono-s text-[10px] text-white/40">
               {new Date(c.created_at).toLocaleString()}
@@ -18,7 +18,7 @@ export function CommentList({ comments, onDelete, testidPrefix = "comment" }) {
           </div>
           {onDelete && (
             <button onClick={() => onDelete(c.id)} data-testid={`${testidPrefix}-delete-${c.id}`}
-              className="text-white/30 hover:text-[#FF3366] transition-colors p-0.5">
+              className="text-white/30 hover:text-[#FF1744] transition-colors p-0.5">
               <X className="w-3 h-3" />
             </button>
           )}
@@ -60,7 +60,7 @@ export function IncidentComments({ event, onUpdated }) {
     <div className="pl-[calc(0.5rem+1rem+10rem+1rem)] pr-4 pb-2">
       <button onClick={() => setOpen(!open)} data-testid={`comment-toggle-${event.id}`}
         className={`inline-flex items-center gap-1.5 font-mono-s text-[10px] uppercase tracking-[0.15em] transition-colors ${
-          count ? "text-[#00FF66]" : "text-white/40 hover:text-white/70"}`}>
+          count ? "text-[#00E676]" : "text-white/40 hover:text-white/70"}`}>
         <MessageSquare className="w-3 h-3" />
         {count ? `${count} update${count > 1 ? "s" : ""}` : "Add update"}
       </button>
@@ -72,10 +72,10 @@ export function IncidentComments({ event, onUpdated }) {
               onKeyDown={(e) => e.key === "Enter" && post()}
               maxLength={500} placeholder="What happened / ETA…"
               data-testid={`comment-input-${event.id}`}
-              className="flex-1 h-8 bg-[#050505] border border-white/10 px-2 text-xs font-mono-s focus:border-white/40 outline-none" />
+              className="flex-1 h-8 bg-[#0B0C10] border border-white/10 px-2 text-xs font-mono-s focus:border-white/40 outline-none" />
             <button onClick={post} disabled={busy || !text.trim()}
               data-testid={`comment-submit-${event.id}`}
-              className="h-8 px-3 border border-white/20 hover:bg-[#00FF66] hover:text-black hover:border-[#00FF66] disabled:opacity-40 transition-colors">
+              className="h-8 px-3 border border-white/20 hover:bg-[#00E676] hover:text-black hover:border-[#00E676] disabled:opacity-40 transition-colors">
               <Send className="w-3 h-3" />
             </button>
           </div>

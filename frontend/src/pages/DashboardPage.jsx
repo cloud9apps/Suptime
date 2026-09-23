@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { PageHeader, Metric, StatusDot } from "@/components/Chrome";
 import { IncidentComments } from "@/components/IncidentComments";
-import { Activity, ArrowUpRight } from "lucide-react";
+import { Activity, ArrowUpRight, ShieldAlert, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function DashboardPage() {
@@ -44,15 +44,15 @@ export default function DashboardPage() {
         description="Live status of every monitored server, certificate and domain."
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 border-b border-white/[0.06]" data-testid="dashboard-metrics">
-        <Metric label="Servers UP"   value={s.up}   tone="up"   testid="metric-up" />
-        <Metric label="Servers DOWN" value={s.down} tone="down" testid="metric-down" />
-        <Metric label="SSL Warn"     value={d.ssl_warn + d.ssl_expired}    tone="warn" testid="metric-ssl-warn" />
-        <Metric label="Domain Warn"  value={d.domain_warn + d.domain_expired} tone="warn" testid="metric-domain-warn" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 md:px-10 pt-8" data-testid="dashboard-metrics">
+        <Metric label="Servers UP"   value={s.up}   tone="up"   testid="metric-up" icon={ArrowUpRight} />
+        <Metric label="Servers DOWN" value={s.down} tone="down" testid="metric-down" icon={Activity} />
+        <Metric label="SSL Warn"     value={d.ssl_warn + d.ssl_expired}    tone="warn" testid="metric-ssl-warn" icon={ShieldAlert} />
+        <Metric label="Domain Warn"  value={d.domain_warn + d.domain_expired} tone="brand" testid="metric-domain-warn" icon={Globe} />
       </div>
 
-      <div className="px-6 md:px-10 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-3 border border-white/10">
+      <div className="px-6 md:px-10 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="lg:col-span-3 glass-card">
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             <div className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/40">
               Uptime History
@@ -88,14 +88,14 @@ export default function DashboardPage() {
                   {row.series.map((day) => {
                     const c =
                       day.pct == null ? "rgba(255,255,255,0.06)"
-                        : day.pct >= 99 ? "#00FF66"
-                        : day.pct >= 90 ? "#FFCC00"
-                        : "#FF3366";
+                        : day.pct >= 99 ? "#00E676"
+                        : day.pct >= 90 ? "#FFC400"
+                        : "#FF1744";
                     return (
                       <div
                         key={day.date}
                         title={`${day.date} — ${day.pct != null ? day.pct + "% (" + day.checks + " checks)" : "no data"}`}
-                        className="flex-1 h-full min-w-[3px]"
+                        className="flex-1 h-full min-w-[3px] rounded-[2px]"
                         style={{ background: c }}
                       />
                     );
@@ -114,14 +114,14 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="lg:col-span-2 border border-white/10">
+        <section className="lg:col-span-2 glass-card">
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             <div className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/40">
               Activity Feed
             </div>
             <Link
               to="/servers"
-              className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60 hover:text-[#00FF66] inline-flex items-center gap-1"
+              className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60 hover:text-[#00E676] inline-flex items-center gap-1"
             >
               All servers <ArrowUpRight className="w-3 h-3" />
             </Link>
@@ -158,7 +158,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="border border-white/10">
+        <section className="glass-card">
           <div className="p-4 border-b border-white/10 font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/40">
             Fleet Snapshot
           </div>
@@ -170,9 +170,9 @@ export default function DashboardPage() {
             <FleetRow label="Domains expired" value={d.domain_expired} tone="down" />
           </div>
           <div className="p-4 border-t border-white/10 font-mono-s text-[10px] tracking-[0.2em] uppercase text-white/40 flex items-center gap-2">
-            <Activity className="w-3 h-3 text-[#00FF66]" />
-            <span className="text-[#00FF66]">LIVE</span>
-            <span className="blink text-[#00FF66]">▍</span>
+            <Activity className="w-3 h-3 text-[#00E676]" />
+            <span className="text-[#00E676]">LIVE</span>
+            <span className="blink text-[#00E676]">▍</span>
             <span className="ml-auto">refreshes every 15s</span>
           </div>
         </section>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
 
 function FleetRow({ label, value, tone }) {
   const c =
-    tone === "warn" ? "text-[#FFCC00]" : tone === "down" ? "text-[#FF3366]" : "text-white";
+    tone === "warn" ? "text-[#FFC400]" : tone === "down" ? "text-[#FF1744]" : "text-white";
   return (
     <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
       <span className="text-xs text-white/50 uppercase tracking-wider">{label}</span>

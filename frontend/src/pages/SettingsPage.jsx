@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const INPUT = "mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0";
+const INPUT = "mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40";
 const LABEL = "font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60";
-const OUTLINE_BTN = "rounded-none border border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9";
+const OUTLINE_BTN = "rounded-sm border border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-[10px] h-9";
 
 const TABS = [
   { v: "general", label: "General", icon: Settings2 },
@@ -90,11 +90,11 @@ export default function SettingsPage() {
         actions={
           <>
             <Button onClick={test} disabled={testing} variant="outline" data-testid="test-alerts-btn"
-              className="rounded-none border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-xs h-10">
+              className="rounded-sm border-white/20 bg-transparent text-white hover:bg-white/5 font-mono-s uppercase tracking-[0.15em] text-xs h-10">
               <Send className="w-4 h-4 mr-2" /> {testing ? "Sending..." : "Test alert"}
             </Button>
             <Button onClick={save} disabled={busy} data-testid="save-settings-btn"
-              className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs h-10">
+              className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs h-10">
               <Save className="w-4 h-4 mr-2" /> {busy ? "Saving..." : "Save"}
             </Button>
           </>
@@ -102,10 +102,10 @@ export default function SettingsPage() {
       />
       <Tabs value={tab} onValueChange={setTab} className="p-6 md:p-10 max-w-5xl">
         <TabsList data-testid="settings-tabs"
-          className="h-auto w-full justify-start flex-wrap gap-1 rounded-none bg-transparent p-0 border-b border-white/10 mb-6">
+          className="h-auto w-full justify-start flex-wrap gap-1 rounded-sm bg-transparent p-0 border-b border-white/10 mb-6">
           {TABS.map((t) => (
             <TabsTrigger key={t.v} value={t.v} data-testid={`tab-${t.v}`}
-              className="rounded-none px-4 py-2.5 font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/50 border-b-2 border-transparent -mb-px data-[state=active]:border-[#00FF66] data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+              className="rounded-sm px-4 py-2.5 font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/50 border-b-2 border-transparent -mb-px data-[state=active]:border-[#00E5FF] data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none">
               <t.icon className="w-3.5 h-3.5 mr-2" /> {t.label}
             </TabsTrigger>
           ))}
@@ -123,7 +123,7 @@ export default function SettingsPage() {
 
 function Section({ eyebrow, title, right, children }) {
   return (
-    <section className="border border-white/10">
+    <section className="glass-card">
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <div>
           <div className="font-mono-s text-[10px] uppercase tracking-[0.25em] text-white/40">{eyebrow}</div>
@@ -242,16 +242,16 @@ function WebhooksTab({ s, set }) {
             className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_minmax(0,130px)_auto_auto] gap-2 items-center border border-white/[0.06] p-2">
             <Input value={wh.name || ""} onChange={(e) => update(i, { name: e.target.value })}
               placeholder="Slack / Discord / n8n" data-testid={`webhook-name-${i}`}
-              className="rounded-none bg-[#050505] border-white/10 font-mono-s text-xs h-9 focus-visible:border-white/40 focus-visible:ring-0" />
+              className="rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-xs h-9 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
             <Input value={wh.url || ""} onChange={(e) => update(i, { url: e.target.value })}
               placeholder="https://hooks.example.com/xyz" data-testid={`webhook-url-${i}`}
-              className="rounded-none bg-[#050505] border-white/10 font-mono-s text-xs h-9 focus-visible:border-white/40 focus-visible:ring-0" />
+              className="rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-xs h-9 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
             <Select value={wh.format || "json"} onValueChange={(v) => update(i, { format: v })}>
               <SelectTrigger data-testid={`webhook-format-${i}`}
-                className="rounded-none bg-[#050505] border-white/10 font-mono-s text-xs h-9">
+                className="rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-xs h-9">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="rounded-none bg-[#0a0a0a] border-white/10">
+              <SelectContent className="rounded-sm bg-[#151822] border-white/10">
                 <SelectItem value="json">Raw JSON</SelectItem>
                 <SelectItem value="slack">Slack blocks</SelectItem>
                 <SelectItem value="discord">Discord embed</SelectItem>
@@ -259,7 +259,7 @@ function WebhooksTab({ s, set }) {
             </Select>
             <Switch checked={wh.enabled} onCheckedChange={(v) => update(i, { enabled: v })} />
             <button onClick={() => remove(i)}
-              className="p-2 border border-white/10 hover:border-[#FF3366]/50 hover:text-[#FF3366] transition-colors">
+              className="p-2 rounded-sm border border-white/10 hover:border-[#FF1744]/50 hover:text-[#FF1744] transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -312,7 +312,7 @@ function PublicTab({ s, set }) {
         </div>
         {publicUrl && s.public_page_enabled && (
           <div className="col-span-2 border border-white/[0.06] px-3 py-2 flex items-center justify-between">
-            <span className="font-mono-s text-xs text-[#00FF66] truncate">{publicUrl}</span>
+            <span className="font-mono-s text-xs text-[#00E676] truncate">{publicUrl}</span>
             <button onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success("Copied"); }}
               className="text-[10px] font-mono-s uppercase tracking-wider text-white/60 hover:text-white">Copy</button>
           </div>
@@ -378,7 +378,7 @@ function BackupTab({ s, reload }) {
           7-day summary: uptime per server, incidents, and upcoming expirations. Requires email alerts enabled.
         </div>
         <Button onClick={sendDigest} disabled={sendingDigest || !s.email_enabled} data-testid="send-digest-btn"
-          className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs h-9">
+          className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs h-9">
           {sendingDigest ? "Sending..." : "Send digest now →"}
         </Button>
       </Section>

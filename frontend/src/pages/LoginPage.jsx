@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatApiError } from "@/lib/api";
-import { Terminal, ShieldCheck } from "lucide-react";
+import { Radar, ShieldCheck } from "lucide-react";
 import { useBranding } from "@/lib/useBranding";
 
 export default function LoginPage() {
@@ -29,7 +29,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-[#050505] text-white">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-[#0B0C10] text-white">
       {/* Left: brand panel */}
       <div className="hidden lg:flex relative overflow-hidden border-r border-white/10">
         <div
@@ -41,11 +41,11 @@ export default function LoginPage() {
             backgroundPosition: "center",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#050505]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0B0C10] via-[#1a1030]/80 to-[#00E5FF]/10" />
         <div className="relative z-10 p-14 flex flex-col justify-between w-full">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 border border-white/20 flex items-center justify-center">
-              <Terminal className="w-5 h-5 text-[#00FF66]" strokeWidth={1.5} />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-[#B388FF] to-[#00E5FF] shadow-[0_0_20px_rgba(179,136,255,0.35)]">
+              <Radar className="w-5 h-5 text-[#0B0C10]" strokeWidth={2} />
             </div>
             <span className="font-mono-s text-xs tracking-[0.3em] uppercase text-white/60">
               {appName} / v1
@@ -58,7 +58,7 @@ export default function LoginPage() {
               <br />
               Every cert.
               <br />
-              <span className="text-[#00FF66]">One console.</span>
+              <span className="text-gradient-brand">One console.</span>
             </h1>
             <p className="mt-6 text-white/60 max-w-md text-sm">
               Self-hosted uptime, SSL &amp; domain expiry, credential vault, and
@@ -67,7 +67,7 @@ export default function LoginPage() {
           </div>
 
           <div className="font-mono-s text-[11px] text-white/40 tracking-wider">
-            <span className="inline-block w-2 h-2 bg-[#00FF66] mr-2 align-middle" />
+            <span className="inline-block w-2 h-2 rounded-full bg-[#00E676] shadow-[0_0_8px_#00E676] mr-2 align-middle" />
             SYSTEM READY — awaiting operator
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function LoginPage() {
 
       {/* Right: form */}
       <div className="flex items-center justify-center p-8">
-        <form onSubmit={submit} className="w-full max-w-sm space-y-6">
+        <form onSubmit={submit} className="w-full max-w-sm space-y-6 glass-card p-8 rise">
           <div className="space-y-2">
             <div className="flex items-center gap-2 font-mono-s text-[11px] uppercase tracking-[0.2em] text-white/50">
               <ShieldCheck className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -102,7 +102,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 data-testid="login-email-input"
-                className="bg-[#050505] border-white/10 rounded-none font-mono-s text-sm h-11 focus-visible:border-white/40 focus-visible:ring-0"
+                className="bg-[#0B0C10] border-white/10 rounded-sm font-mono-s text-sm h-11 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40"
               />
             </div>
             <div className="space-y-2">
@@ -119,7 +119,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 data-testid="login-password-input"
-                className="bg-[#050505] border-white/10 rounded-none font-mono-s text-sm h-11 focus-visible:border-white/40 focus-visible:ring-0"
+                className="bg-[#0B0C10] border-white/10 rounded-sm font-mono-s text-sm h-11 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40"
               />
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function LoginPage() {
           {error && (
             <div
               data-testid="login-error"
-              className="border border-[#FF3366]/50 bg-[#FF3366]/5 px-3 py-2 text-xs font-mono-s text-[#FF3366]"
+              className="border border-[#FF1744]/50 bg-[#FF1744]/5 px-3 py-2 text-xs font-mono-s text-[#FF1744]"
             >
               {error}
             </div>
@@ -137,7 +137,7 @@ export default function LoginPage() {
             type="submit"
             disabled={busy}
             data-testid="login-submit-btn"
-            className="w-full h-11 rounded-none bg-white text-black hover:bg-[#00FF66] hover:text-black font-mono-s tracking-[0.15em] uppercase text-xs transition-colors"
+            className="w-full h-11 rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-semibold text-sm transition-colors"
           >
             {busy ? "Authenticating..." : "Enter Console →"}
           </Button>

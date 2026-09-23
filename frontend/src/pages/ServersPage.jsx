@@ -33,6 +33,8 @@ import {
   CartesianGrid,
 } from "recharts";
 
+const fmtTarget = (s) => (/^[a-z]+:\/\//i.test(s.target) ? s.target : `${s.check_kind}://${s.target}`);
+
 const EMPTY = {
   name: "",
   check_kind: "https",
@@ -182,7 +184,7 @@ export default function ServersPage() {
               <Button
                 onClick={openNew}
                 data-testid="add-server-btn"
-                className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs h-10"
+                className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs h-10"
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Server
               </Button>
@@ -208,7 +210,7 @@ export default function ServersPage() {
                 onClick={() => setSelectedId(s.id)}
                 data-testid={`server-row-${s.id}`}
                 className={`w-full text-left p-4 border-b border-white/[0.06] transition-colors ${
-                  isSel ? "bg-white/[0.04]" : "hover:bg-white/[0.02]"
+                  isSel ? "bg-white/[0.05] border-l-2 border-l-[#00E5FF] shadow-[inset_0_0_30px_rgba(0,229,255,0.04)]" : "border-l-2 border-l-transparent hover:bg-white/[0.025]"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -217,10 +219,10 @@ export default function ServersPage() {
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate flex items-center gap-2">
                         {s.name}
-                        {s.alerts_muted && <BellOff className="w-3 h-3 text-[#FFCC00] shrink-0" data-testid={`muted-icon-${s.id}`} />}
+                        {s.alerts_muted && <BellOff className="w-3 h-3 text-[#FFC400] shrink-0" data-testid={`muted-icon-${s.id}`} />}
                       </div>
                       <div className="font-mono-s text-[11px] text-white/40 truncate">
-                        {s.check_kind}://{s.target}
+                        {fmtTarget(s)}
                       </div>
                     </div>
                   </div>
@@ -254,7 +256,7 @@ export default function ServersPage() {
                   </div>
                   <h2 className="font-display text-2xl font-bold mt-1">{selected.name}</h2>
                   <div className="font-mono-s text-xs text-white/40 mt-1">
-                    {selected.check_kind}://{selected.target}
+                    {fmtTarget(selected)}
                   </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -262,9 +264,9 @@ export default function ServersPage() {
                     onClick={() => toggleMute(selected)}
                     variant="outline"
                     data-testid="mute-toggle-btn"
-                    className={`rounded-none bg-transparent h-9 font-mono-s uppercase tracking-[0.15em] text-[10px] ${
+                    className={`rounded-sm bg-transparent h-9 font-mono-s uppercase tracking-[0.15em] text-[10px] ${
                       selected.alerts_muted
-                        ? "border-[#FFCC00]/50 text-[#FFCC00] hover:bg-[#FFCC00]/10"
+                        ? "border-[#FFC400]/50 text-[#FFC400] hover:bg-[#FFC400]/10"
                         : "border-white/20 hover:bg-white/5"
                     }`}
                   >
@@ -276,7 +278,7 @@ export default function ServersPage() {
                     onClick={() => runCheck(selected.id)}
                     variant="outline"
                     data-testid="run-check-btn"
-                    className="rounded-none border-white/20 bg-transparent hover:bg-white/5 h-9 font-mono-s uppercase tracking-[0.15em] text-[10px]"
+                    className="rounded-sm border-white/20 bg-transparent hover:bg-white/5 h-9 font-mono-s uppercase tracking-[0.15em] text-[10px]"
                   >
                     <RefreshCw className="w-3.5 h-3.5 mr-2" /> Check now
                   </Button>
@@ -285,7 +287,7 @@ export default function ServersPage() {
                       onClick={() => runSsh(selected.id)}
                       variant="outline"
                       data-testid="ssh-metrics-btn"
-                      className="rounded-none border-white/20 bg-transparent hover:bg-white/5 h-9 font-mono-s uppercase tracking-[0.15em] text-[10px]"
+                      className="rounded-sm border-white/20 bg-transparent hover:bg-white/5 h-9 font-mono-s uppercase tracking-[0.15em] text-[10px]"
                     >
                       <Cpu className="w-3.5 h-3.5 mr-2" /> Pull SSH metrics
                     </Button>
@@ -294,7 +296,7 @@ export default function ServersPage() {
                     onClick={() => openEdit(selected)}
                     variant="outline"
                     data-testid="edit-server-btn"
-                    className="rounded-none border-white/20 bg-transparent hover:bg-white/5 h-9 font-mono-s uppercase tracking-[0.15em] text-[10px]"
+                    className="rounded-sm border-white/20 bg-transparent hover:bg-white/5 h-9 font-mono-s uppercase tracking-[0.15em] text-[10px]"
                   >
                     Edit
                   </Button>
@@ -302,14 +304,14 @@ export default function ServersPage() {
                     onClick={() => del(selected.id)}
                     variant="outline"
                     data-testid="delete-server-btn"
-                    className="rounded-none border-[#FF3366]/40 bg-transparent text-[#FF3366] hover:bg-[#FF3366]/10 h-9 font-mono-s uppercase tracking-[0.15em] text-[10px]"
+                    className="rounded-sm border-[#FF1744]/40 bg-transparent text-[#FF1744] hover:bg-[#FF1744]/10 h-9 font-mono-s uppercase tracking-[0.15em] text-[10px]"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 border border-white/10">
+              <div className="grid grid-cols-3 glass-card">
                 <MetricCell
                   icon={<Server className="w-4 h-4" />}
                   label="Uptime 24h"
@@ -327,7 +329,7 @@ export default function ServersPage() {
                 />
               </div>
 
-              <div className="border border-white/10">
+              <div className="glass-card">
                 <div className="p-3 border-b border-white/10 font-mono-s text-[10px] tracking-[0.25em] uppercase text-white/40">
                   Latency (24h)
                 </div>
@@ -338,10 +340,10 @@ export default function ServersPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>
                         <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="t" stroke="#6B7280" fontSize={10} style={{ fontFamily: "JetBrains Mono" }} />
-                        <YAxis stroke="#6B7280" fontSize={10} style={{ fontFamily: "JetBrains Mono" }} />
-                        <Tooltip contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 0, fontFamily: "JetBrains Mono", fontSize: 11 }} />
-                        <Line type="monotone" dataKey="latency" stroke="#00FF66" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                        <XAxis dataKey="t" stroke="#64748B" fontSize={10} style={{ fontFamily: "JetBrains Mono" }} />
+                        <YAxis stroke="#64748B" fontSize={10} style={{ fontFamily: "JetBrains Mono" }} />
+                        <Tooltip contentStyle={{ background: "rgba(21,24,34,0.95)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, fontFamily: "JetBrains Mono", fontSize: 11 }} />
+                        <Line type="monotone" dataKey="latency" stroke="#00E5FF" strokeWidth={2} dot={false} isAnimationActive={false} />
                       </LineChart>
                     </ResponsiveContainer>
                   )}
@@ -350,7 +352,7 @@ export default function ServersPage() {
 
               {(selected.ssh_enabled || selected.agent_enabled) && (
                 <>
-                  <div className="grid grid-cols-3 border border-white/10">
+                  <div className="grid grid-cols-3 glass-card">
                     <MetricCell
                       icon={<Cpu className="w-4 h-4" />}
                       label="CPU"
@@ -367,7 +369,7 @@ export default function ServersPage() {
                       value={lastMetric?.disk_percent != null ? `${lastMetric.disk_percent}%` : "—"}
                     />
                   </div>
-                  <div className="border border-white/10">
+                  <div className="glass-card">
                     <div className="p-3 border-b border-white/10 font-mono-s text-[10px] tracking-[0.25em] uppercase text-white/40">
                       CPU / Memory (24h)
                     </div>
@@ -378,11 +380,11 @@ export default function ServersPage() {
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={cpuData}>
                             <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                            <XAxis dataKey="t" stroke="#6B7280" fontSize={10} style={{ fontFamily: "JetBrains Mono" }} />
-                            <YAxis stroke="#6B7280" fontSize={10} style={{ fontFamily: "JetBrains Mono" }} domain={[0, 100]} />
-                            <Tooltip contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 0, fontFamily: "JetBrains Mono", fontSize: 11 }} />
-                            <Line type="monotone" dataKey="cpu" stroke="#00FF66" strokeWidth={1.5} dot={false} isAnimationActive={false} name="CPU %" />
-                            <Line type="monotone" dataKey="mem" stroke="#FFCC00" strokeWidth={1.5} dot={false} isAnimationActive={false} name="MEM %" />
+                            <XAxis dataKey="t" stroke="#64748B" fontSize={10} style={{ fontFamily: "JetBrains Mono" }} />
+                            <YAxis stroke="#64748B" fontSize={10} style={{ fontFamily: "JetBrains Mono" }} domain={[0, 100]} />
+                            <Tooltip contentStyle={{ background: "rgba(21,24,34,0.95)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, fontFamily: "JetBrains Mono", fontSize: 11 }} />
+                            <Line type="monotone" dataKey="cpu" stroke="#00E5FF" strokeWidth={2} dot={false} isAnimationActive={false} name="CPU %" />
+                            <Line type="monotone" dataKey="mem" stroke="#B388FF" strokeWidth={2} dot={false} isAnimationActive={false} name="MEM %" />
                           </LineChart>
                         </ResponsiveContainer>
                       )}
@@ -392,7 +394,7 @@ export default function ServersPage() {
               )}
 
               {selected.agent_enabled && selected.agent_token && (
-                <div className="border border-white/10 p-4">
+                <div className="glass-card p-4">
                   <div className="font-mono-s text-[10px] tracking-[0.25em] uppercase text-white/40 mb-3">
                     Lightweight Agent
                   </div>
@@ -401,7 +403,7 @@ export default function ServersPage() {
                   </div>
                   <pre
                     data-testid="agent-command"
-                    className="font-mono-s text-[11px] bg-[#050505] border border-white/10 p-3 overflow-auto whitespace-pre-wrap break-all"
+                    className="font-mono-s text-[11px] bg-[#0B0C10] border border-white/10 p-3 overflow-auto whitespace-pre-wrap break-all"
                   >
 {`while true; do
   CPU=$(top -bn1 | grep -E '^%?Cpu' | head -1 | awk -F',' '{for(i=1;i<=NF;i++) if($i ~ /id/){gsub(/ /,"",$i); print 100-$1}}' 2>/dev/null || echo "")
@@ -417,13 +419,13 @@ done`}
               )}
 
               {(selected.alerts_muted || Object.values(selected.alert_overrides || {}).some((v) => v != null)) && (
-                <div className="border border-[#FFCC00]/30 p-4" data-testid="alert-rules-panel">
-                  <div className="font-mono-s text-[10px] tracking-[0.25em] uppercase text-[#FFCC00] mb-2">
+                <div className="glass-card !border-[#FFC400]/40 p-4" data-testid="alert-rules-panel">
+                  <div className="font-mono-s text-[10px] tracking-[0.25em] uppercase text-[#FFC400] mb-2">
                     Alert Rules (server-specific)
                   </div>
                   <div className="flex flex-wrap gap-2 font-mono-s text-[11px]">
                     {selected.alerts_muted && (
-                      <span className="border border-[#FFCC00]/40 text-[#FFCC00] px-2 py-1">ALERTS MUTED</span>
+                      <span className="border border-[#FFC400]/40 text-[#FFC400] px-2 py-1">ALERTS MUTED</span>
                     )}
                     {Object.entries(selected.alert_overrides || {})
                       .filter(([, v]) => v != null)
@@ -437,7 +439,7 @@ done`}
               )}
 
               {selected.notes && (
-                <div className="border border-white/10 p-4">
+                <div className="glass-card p-4">
                   <div className="font-mono-s text-[10px] tracking-[0.25em] uppercase text-white/40 mb-2">
                     Notes
                   </div>
@@ -467,7 +469,7 @@ function MetricCell({ icon, label, value }) {
 function ServerFormDialog({ form, setForm, onSave, busy, editing }) {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   return (
-    <DialogContent className="bg-[#0a0a0a] border border-white/10 rounded-none max-w-2xl max-h-[90vh] overflow-auto">
+    <DialogContent className="bg-[#151822]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[0_16px_64px_rgba(0,0,0,0.6)] max-w-2xl max-h-[90vh] overflow-auto">
       <DialogHeader>
         <DialogTitle className="font-display text-xl">
           {editing ? "Edit Server" : "Add Server"}
@@ -477,15 +479,15 @@ function ServerFormDialog({ form, setForm, onSave, busy, editing }) {
         <div className="col-span-2">
           <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Name</Label>
           <Input value={form.name} onChange={(e) => set("name", e.target.value)} data-testid="form-name"
-            className="mt-1 rounded-none bg-[#050505] border-white/10 focus-visible:border-white/40 focus-visible:ring-0" />
+            className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
         </div>
         <div>
           <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Check kind</Label>
           <Select value={form.check_kind} onValueChange={(v) => set("check_kind", v)}>
-            <SelectTrigger data-testid="form-kind" className="mt-1 rounded-none bg-[#050505] border-white/10">
+            <SelectTrigger data-testid="form-kind" className="mt-1 rounded-sm bg-[#0B0C10] border-white/10">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-none bg-[#0a0a0a] border-white/10">
+            <SelectContent className="rounded-sm bg-[#151822] border-white/10">
               <SelectItem value="https">HTTPS</SelectItem>
               <SelectItem value="http">HTTP</SelectItem>
               <SelectItem value="ping">Ping (ICMP)</SelectItem>
@@ -498,17 +500,17 @@ function ServerFormDialog({ form, setForm, onSave, busy, editing }) {
             Target {form.check_kind === "tcp" && "(host:port)"}
           </Label>
           <Input value={form.target} onChange={(e) => set("target", e.target.value)} data-testid="form-target"
-            className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+            className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
         </div>
         <div>
           <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Interval (sec)</Label>
           <Input type="number" min={30} value={form.interval_seconds} onChange={(e) => set("interval_seconds", parseInt(e.target.value || "60"))}
-            className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+            className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
         </div>
         <div className="col-span-2">
           <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Notes</Label>
           <Textarea value={form.notes || ""} onChange={(e) => set("notes", e.target.value)}
-            className="mt-1 rounded-none bg-[#050505] border-white/10 focus-visible:border-white/40 focus-visible:ring-0" />
+            className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
         </div>
 
         <div className="col-span-2 border-t border-white/10 pt-4">
@@ -521,23 +523,23 @@ function ServerFormDialog({ form, setForm, onSave, busy, editing }) {
           <>
             <div>
               <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">SSH host</Label>
-              <Input value={form.ssh_host || ""} onChange={(e) => set("ssh_host", e.target.value)} className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+              <Input value={form.ssh_host || ""} onChange={(e) => set("ssh_host", e.target.value)} className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
             </div>
             <div>
               <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">SSH port</Label>
-              <Input type="number" value={form.ssh_port} onChange={(e) => set("ssh_port", parseInt(e.target.value || "22"))} className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+              <Input type="number" value={form.ssh_port} onChange={(e) => set("ssh_port", parseInt(e.target.value || "22"))} className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
             </div>
             <div>
               <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">SSH username</Label>
-              <Input value={form.ssh_username || ""} onChange={(e) => set("ssh_username", e.target.value)} className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+              <Input value={form.ssh_username || ""} onChange={(e) => set("ssh_username", e.target.value)} className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
             </div>
             <div>
               <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">Password (or leave blank if using key)</Label>
-              <Input type="password" value={form.ssh_password || ""} onChange={(e) => set("ssh_password", e.target.value)} className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s focus-visible:border-white/40 focus-visible:ring-0" />
+              <Input type="password" value={form.ssh_password || ""} onChange={(e) => set("ssh_password", e.target.value)} className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
             </div>
             <div className="col-span-2">
               <Label className="font-mono-s text-[10px] uppercase tracking-[0.2em] text-white/60">SSH private key (PEM, optional)</Label>
-              <Textarea value={form.ssh_private_key || ""} onChange={(e) => set("ssh_private_key", e.target.value)} rows={4} className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s text-xs focus-visible:border-white/40 focus-visible:ring-0" />
+              <Textarea value={form.ssh_private_key || ""} onChange={(e) => set("ssh_private_key", e.target.value)} rows={4} className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-xs focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
             </div>
           </>
         )}
@@ -590,7 +592,7 @@ function ServerFormDialog({ form, setForm, onSave, busy, editing }) {
                     },
                   }))}
                   data-testid={`override-${k}`}
-                  className="mt-1 rounded-none bg-[#050505] border-white/10 font-mono-s text-xs h-9 focus-visible:border-white/40 focus-visible:ring-0" />
+                  className="mt-1 rounded-sm bg-[#0B0C10] border-white/10 font-mono-s text-xs h-9 focus-visible:border-[#00E5FF] focus-visible:ring-1 focus-visible:ring-[#00E5FF]/40" />
               </div>
             ))}
           </div>
@@ -601,7 +603,7 @@ function ServerFormDialog({ form, setForm, onSave, busy, editing }) {
           onClick={onSave}
           disabled={busy || !form.name || !form.target}
           data-testid="save-server-btn"
-          className="rounded-none bg-white text-black hover:bg-[#00FF66] font-mono-s uppercase tracking-[0.15em] text-xs"
+          className="rounded-sm bg-[#B388FF] text-[#0B0C10] hover:bg-[#9965FF] shadow-[0_0_16px_rgba(179,136,255,0.35)] font-mono-s uppercase tracking-[0.15em] text-xs"
         >
           {busy ? "Saving..." : editing ? "Update" : "Add Server"}
         </Button>
